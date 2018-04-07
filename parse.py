@@ -14,10 +14,11 @@ RSB = 'RSB'  # ]
 ASSIGN = 'ASSIGN'  # =
 COLON = 'COLON'  # :
 COMMA = 'COMMA'  # ,
+STR = 'STR'
 INT = 'INT'
 FLOAT = 'FLOAT'
 ID = 'ID'
-TABEND = 'TABEND'
+TAB = 'TAB'
 END = 'END'
 DEF = 'DEF'
 IF = 'IF'
@@ -100,12 +101,9 @@ class Lexer(object):
     # 一行的分词
     def tokenize_line(self, line):
         cur_tab_level = self.count_tab_level(line)
-        if cur_tab_level > self.tab_level:
+        if cur_tab_level != self.tab_level:
             self.tab_level = cur_tab_level
-        elif cur_tab_level < self.tab_level:
-            while cur_tab_level != self.tab_level:
-                self.tab_level -= 1
-                yield '$'
+            yield self.tab_level
 
         for m in re.finditer(r'\'\'\'|"""|".*?"|\'.*?\'|//?|[-+*()[\]{}:,;#]|[><=]=?|!=|[A-Za-z_]+\d*|\d+(?:\.\d*)?', line):
             tok = m.group(0)
@@ -123,7 +121,7 @@ class Lexer(object):
         return token
 
     def number(self, tok):
-        return Token(FLOAT, tok) if '.' in tok else Token(INT, 'tok')
+        return Token(FLOAT, float(tok)) if '.' in tok else Token(INT, int(tok))
 
     def error(self):
         raise Exception('Invalid character')
@@ -132,62 +130,65 @@ class Lexer(object):
         jump = False
         for line in self.program:
             for tok in self.tokenize_line(line):
-                if tok in ("'''", '"""'):
+                if isinstance(tok, int):
+                    yield Token(TAB, tok)
+                elif tok in ("'''", '"""'):
                     jump = not jump
                     break
-                if tok == "#" or jump:
+                elif tok == "#" or jump:
                     break
-                if re.match(r'[A-Za-z_]+\d*', tok):
+                elif re.match(r'[A-Za-z_]+\d*', tok):
                     yield self._id(tok)
-                if re.match(r'\d+(?:\.\d*)?', tok):
+                elif re.match(r'\d+(?:\.\d*)?', tok):
                     yield self.number(tok)
-                if tok == ':':
+                elif tok[0] in ('"', "'"):
+                    yield Token(STR, tok)
+                elif tok == ':':
                     yield Token(COLON, ':')
-                if tok == '=':
+                elif tok == '=':
                     yield Token(ASSIGN, '=')
-                if tok == '==':
+                elif tok == '==':
                     yield Token(EQ, '==')
-                if tok == '>':
+                elif tok == '>':
                     yield Token(GT, '>')
-                if tok == '<':
+                elif tok == '<':
                     yield Token(LT, '<')
-                if tok == '>=':
+                elif tok == '>=':
                     yield Token(GE, '>=')
-                if tok == '<=':
+                elif tok == '<=':
                     yield Token(LE, '<=')
-                if tok == '!=':
+                elif tok == '!=':
                     yield Token(NE, '!=')
-                if tok == '(':
+                elif tok == '(':
                     yield Token(LB, '(')
-                if tok == ')':
+                elif tok == ')':
                     yield Token(RB, ')')
-                if tok == '{':
+                elif tok == '{':
                     yield Token(LCB, '{')
-                if tok == '}':
+                elif tok == '}':
                     yield Token(RCB, '}')
-                if tok == '[':
+                elif tok == '[':
                     yield Token(LSB, '[')
-                if tok == ']':
+                elif tok == ']':
                     yield Token(RSB, ']')
-                if tok == '+':
+                elif tok == '+':
                     yield Token(ADD, '+')
-                if tok == '-':
+                elif tok == '-':
                     yield Token(SUB, '-')
-                if tok == '*':
+                elif tok == '*':
                     yield Token(MUL, '*')
-                if tok == '/':
+                elif tok == '/':
                     yield Token(REAL_DIV, '/')
-                if tok == '//':
+                elif tok == '//':
                     yield Token(DIV, '//')
-                if tok == ',':
+                elif tok == ',':
                     yield Token(COMMA, ',')
-                if tok == ';':
+                elif tok == ';':
                     yield Token(END, ';')
-                if tok == '$':
-                    yield Token(TABEND, None)
-                if tok == ';':
+                elif tok == ';':
                     continue
-                self.error()
+                else:
+                    self.error()
             yield Token(END, None)
         yield Token(EOF, None)
 
@@ -362,7 +363,8 @@ class Parser(object):
 
 def main():
     with open('test.py', "r", encoding="utf8") as f:
-        pass
+        for token in Lexer(f).tokenize():
+            print(token)
 
 
 if __name__ == '__main__':
