@@ -16,6 +16,18 @@ DOT = 'DOT'  # .
 ADD = 'ADD'  # +
 SUB = 'SUB'  # -
 MUL = 'MUL'  # *
+ET = 'ET'  # &
+ETE = 'ETE'  # &=
+SHUE = 'SHUE'  # |=
+SHU = 'SHU'  # |
+OPPO = 'OPPO'  # ~
+DIF = 'DIF'  # ^
+DIFE = 'DIFE'  # ^=
+OPIN = 'OPIN'  # ->
+POWER = 'POWER'  # **
+POWERE = 'POWERE'  # **=
+DEC = 'DEC'  # @
+DECE = 'DECE'  # @=
 DIV = 'DIV'  # //
 REAL_DIV = 'REAL_DIV'  # /
 YU = 'YU'  # %
@@ -31,6 +43,11 @@ LT = 'LT'  # <
 LE = 'LE'  # <=
 EQ = 'EQ'  # ==
 NE = 'NE'  # !=
+LLE = 'LLE'  # <<=
+LL = 'LL'  # <<
+RR = 'RR'  # >>
+RRE = 'RRE'  # >>=
+ES = 'ES'  # \
 EOF = 'EOF'
 INT = 'INT'
 OINT = 'OINT'
@@ -41,7 +58,6 @@ INUM = 'INUM'
 ID = 'ID'
 STR = 'STR'
 BSTR = 'BSTR'
-TAB = 'TAB'
 NEWLINE = 'NEWLINE'
 # 关键词
 IS = 'IS'
@@ -143,7 +159,6 @@ class CharacterError(Exception):
 class Lexer(object):
     def __init__(self, text):
         self.text = text
-        self.tab_level = 0
         self.pos = 0
         self.current_char = self.text[self.pos]
 
@@ -181,13 +196,6 @@ class Lexer(object):
         while self.current_char != '\n':
             self.advance()
         self.advance()
-
-    def count_tab_level(self, line):
-        # 计算缩进级别
-        tab_level = 0
-        while line[tab_level*4:(tab_level+1)*4] == ' '*4:
-            tab_level += 1
-        return tab_level
 
     def stringliteral(self):
         # [stringprefix](shortstring | longstring)
@@ -500,7 +508,7 @@ class Lexer(object):
                 return self.stringliteral()
 
         result = ''
-        while self.current_char is not None and cur_char.isalnum() or cur_char == '_':
+        while self.current_char.isalnum() or cur_char == '_':
             result += self.current_char
             self.advance()
 
@@ -756,11 +764,185 @@ class Lexer(object):
                 self.current_char = self.text[self.pos]
                 return self.integer()
 
+    def other(self):
+        if self.current_char == '>':
+            if self.peekn(2) == ">=":
+                self.advance()
+                self.advance()
+                self.advance()
+                return Token(RRE, ">>=")
+
+            if self.peek() == '>':
+                self.advance()
+                self.advance()
+                return Token(RR, ">>")
+
+            if self.peek() == '=':
+                self.advance()
+                self.advance()
+                return Token(GE, ">=")
+
+            self.advance()
+            return Token(GT, ">")
+
+        if self.current_char == '<':
+            if self.peekn(2) == "<=":
+                self.advance()
+                self.advance()
+                self.advance()
+                return Token(LLE, "<<=")
+
+            if self.peek() == '<':
+                self.advance()
+                self.advance()
+                return Token(LL, "<<")
+
+            if self.peek() == '=':
+                self.advance()
+                self.advance()
+                return Token(LE, "<=")
+
+            self.advance()
+            return Token(LT, "<")
+
+        if self.current_char == '\\':
+            self.advance()
+            return Token(ES, "\\")
+
+        if self.current_char == '~':
+            self.advance()
+            return Token(OPPO, '~')
+
+        if self.current_char == '^':
+            if self.peek() == '=':
+                self.advance()
+                self.advance()
+                return Token(DIFE, "^=")
+            self.advance()
+            return Token(DIF, "^")
+
+        if self.current_char == '!' and self.peek() == "=":
+            self.advance()
+            self.advance()
+            return Token(NE, "!=")
+
+        if self.current_char == "&":
+            if self.peek() == '=':
+                self.advance()
+                self.advance()
+                return Token(ET, "&=")
+            self.advance()
+            return Token(ET, '&')
+
+        if self.current_char == '|':
+            if self.peek() == '=':
+                self.advance()
+                self.advance()
+                return Token(SHUE, "|=")
+            self.advance()
+            return Token(SHU, "|")
+
+        if self.current_char == "@":
+            if self.peek() == "=":
+                self.advance()
+                self.advance()
+                return Token(DECE, '@=')
+            self.advance()
+            return Token(DEC, "@")
+
+        if self.current_char == "=":
+            if self.peek() == "=":
+                self.advance()
+                self.advance()
+                return Token(EQ, "==")
+            self.advance()
+            return Token(ASSIGN, "=")
+
+        if self.current_char == "%":
+            if self.peek() == "=":
+                self.advance()
+                self.advance()
+                return Token(YUE, "%=")
+
+            self.advance()
+            return Token(YU, "%")
+
+        if self.current_char == "+":
+            if self.peek() == "=":
+                self.advance()
+                self.advance()
+                return Token(ADDE, "+=")
+
+            self.advance()
+            return Token(ADD, "+")
+
+        if self.current_char == "-":
+            if self.peek() == "=":
+                self.advance()
+                self.advance()
+                return Token(SUBE, "-=")
+
+            if self.peek() == ">":
+                self.advance()
+                self.advance()
+                return Token(OPIN, "->")
+
+            self.advance()
+            return Token(SUB, "-")
+
+        if self.current_char == '*':
+            if self.peek() == "=":
+                self.advance()
+                self.advance()
+                return Token(MULE, "*=")
+
+            if self.peekn(2) == "*=":
+                self.advance()
+                self.advance()
+                self.advance()
+                return Token(POWERE, "**=")
+
+            if self.peek() == "=":
+                self.advance()
+                self.advance()
+                return Token(POWER, "*=")
+
+            self.advance()
+            return Token(MUL, "*")
+
+        if self.current_char == '/':
+            if self.peek() == '=':
+                self.advance()
+                self.advance()
+                return Token(REAL_DIVE, "/=")
+
+            if self.peekn(2) == '/=':
+                self.advance()
+                self.advance()
+                self.advance()
+                return Token(DIVE, "//=")
+
+            if self.peek() == "/":
+                self.advance()
+                self.advance()
+                return Token(DIV, "//")
+
+            self.advance()
+            return Token(REAL_DIV, "/")
+
     def error(self):
         raise CharacterError('Invalid character')
 
     def get_next_token(self):
+
         while self.current_char is not None:
+            if self.current_char == '\n':
+                self.advance()
+                tab = 0
+                while self.current_char is not None and self.current_char.isspace():
+                    tab = tab + 1 if self.current_char != '\n' else 0
+                    self.advance()
+                return Token(NEWLINE, tab)
 
             if self.current_char.isspace():
                 self.skip_whitespace()
@@ -788,57 +970,51 @@ class Lexer(object):
                 return self.stringliteral()
 
             if self.current_char == "(":
+                self.advance()
                 return Token(LB, "(")
 
             if self.current_char == ")":
+                self.advance()
                 return Token(RB, ")")
 
             if self.current_char == "[":
+                self.advance()
                 return Token(LSB, "[")
 
             if self.current_char == "]":
+                self.advance()
                 return Token(RSB, "]")
 
             if self.current_char == "{":
+                self.advance()
                 return Token(LCB, "{")
 
             if self.current_char == "}":
+                self.advance()
                 return Token(RCB, "}")
 
             if self.current_char == ",":
+                self.advance()
                 return Token(COMMA, ",")
 
             if self.current_char == ":":
+                self.advance()
                 return Token(COLON, ":")
 
             if self.current_char == ".":
+                self.advance()
                 return Token(DOT, ".")
 
             if self.current_char == ";":
+                self.advance()
                 return Token(CEMI, ";")
 
-# Operators
-# +       -       *       **      /       //      %      @
-# <<      >>      &       |       ^       ~
-# <       >       <=      >=      ==      !=
-
-# Delimiters
-# (       )       [       ]       {       }
-# ,       :       .       ;       @       =       ->
-# +=      -=      *=      /=      //=     %=      @=
-# &=      |=      ^=      >>=     <<=     **=
-
-# special
-# '       "       #       \
-
-# error
-# $       ?       `
+            return self.other()
 
 
 def main():
-    # with open('test.py', "r", encoding="utf8") as f:
-    #     for token in Lexer(f).tokenize():
-    #         print(token)
+    with open('/home/aiyane/code/python/Bytecode/test.py', "r", encoding="utf8") as f:
+        text = f.read()
     test = """
 r\"hello\"
 u\"hello\"
@@ -883,7 +1059,7 @@ hello'''
 0e0
 3.14_15_93
 """
-    lexer = Lexer(test)
+    lexer = Lexer(text)
     while True:
         token = lexer.get_next_token()
         if token is None:
