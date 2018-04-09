@@ -14,6 +14,13 @@
 b1 = [1, 2, 3, 4, 5]
 a1 = 10
 
+class Test(object):
+    def __init__(self, name):
+        self.name = name
+    
+    def haha(self):
+        print(self.name)
+
 
 def say(a1, b1):
 
@@ -25,10 +32,10 @@ def say(a1, b1):
 
 def hello(a, b):
     """
-    还不支持
+    hello
+    """
     a += 1
     b -= 1
-    """
     say(a1, b1)
     a = a + 1
     b = b - 1

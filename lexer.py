@@ -508,7 +508,7 @@ class Lexer(object):
                 return self.stringliteral()
 
         result = ''
-        while self.current_char.isalnum() or cur_char == '_':
+        while self.current_char is not None and (self.current_char.isalnum() or self.current_char == '_'):
             result += self.current_char
             self.advance()
 
