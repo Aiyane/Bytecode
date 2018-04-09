@@ -17,36 +17,19 @@ ADD = 'ADD'  # +
 SUB = 'SUB'  # -
 MUL = 'MUL'  # *
 ET = 'ET'  # &
-ETE = 'ETE'  # &=
-SHUE = 'SHUE'  # |=
 SHU = 'SHU'  # |
 OPPO = 'OPPO'  # ~
 DIF = 'DIF'  # ^
-DIFE = 'DIFE'  # ^=
 OPIN = 'OPIN'  # ->
 POWER = 'POWER'  # **
-POWERE = 'POWERE'  # **=
+AUGASSIGN = 'AUGASSIGN'
 DEC = 'DEC'  # @
-DECE = 'DECE'  # @=
 DIV = 'DIV'  # //
 REAL_DIV = 'REAL_DIV'  # /
 YU = 'YU'  # %
-ADDE = 'ADDE'  # +=
-SUBE = 'SUBE'  # -=
-MULE = 'MULE'  # *=
-DIVE = 'DIVE'  # //=
-REAL_DIVE = 'REAL_DIVE'  # /=
-YUE = 'YUE'  # %=
-GT = 'GT'  # >
-GE = 'GE'  # >=
-LT = 'LT'  # <
-LE = 'LE'  # <=
-EQ = 'EQ'  # ==
-NE = 'NE'  # !=
-LLE = 'LLE'  # <<=
+COMP_OP = 'COMP_OP'
 LL = 'LL'  # <<
 RR = 'RR'  # >>
-RRE = 'RRE'  # >>=
 ES = 'ES'  # \
 EOF = 'EOF'
 INT = 'INT'
@@ -61,8 +44,8 @@ BSTR = 'BSTR'
 NEWLINE = 'NEWLINE'
 # 关键词
 IS = 'IS'
-CONTINUE = 'CONTINUE'
-BREAK = 'BREAK'
+CONTINUE_STMT = 'CONTINUE_STMT'
+BREAK_STMT = 'BREAK_STMT'
 WHILE = 'WHILE'
 FOR = 'FOR'
 RET = 'RET'
@@ -88,10 +71,11 @@ AS = 'AS'
 YIELD = 'YIELD'
 ASSERT = 'ASSERT'
 IMPORT = 'IMPORT'
-PASS = 'PASS'
+PASS_STMT = 'PASS_STMT'
 EXCEPT = 'EXCEPT'
 IN = 'IN'
 RAISE = 'RAISE'
+AWAIT = 'AWAIT'
 
 
 class Token(object):
@@ -118,8 +102,8 @@ class Token(object):
 # 关键字
 KEY_WORDS = {
     'is': Token(IS, 'IS'),
-    'continue': Token(CONTINUE, 'CONTINUE'),
-    'break': Token(BREAK, 'BREAK'),
+    'continue': Token(CONTINUE_STMT, 'CONTINUE_STMT'),
+    'break': Token(BREAK_STMT, 'BREAK_STMT'),
     'while': Token(WHILE, 'WHILE'),
     'for': Token(FOR, 'FOR'),
     'return': Token(RET, 'RET'),
@@ -145,10 +129,11 @@ KEY_WORDS = {
     'yield': Token(YIELD, 'YIELD'),
     'assert': Token(ASSERT, 'ASSERT'),
     'import': Token(IMPORT, 'IMPORT'),
-    'pass': Token(PASS, 'PASS'),
+    'pass': Token(PASS_STMT, 'PASS_STMT'),
     'except': Token(EXCEPT, 'EXCEPT'),
     'in': Token(IN, 'IN'),
     'raise': Token(RAISE, 'RAISE'),
+    'await': Token(AWAIT, 'AWAIT')
 }
 
 
@@ -770,7 +755,7 @@ class Lexer(object):
                 self.advance()
                 self.advance()
                 self.advance()
-                return Token(RRE, ">>=")
+                return Token(AUGASSIGN, ">>=")
 
             if self.peek() == '>':
                 self.advance()
@@ -780,17 +765,17 @@ class Lexer(object):
             if self.peek() == '=':
                 self.advance()
                 self.advance()
-                return Token(GE, ">=")
+                return Token(COMP_OP, ">=")
 
             self.advance()
-            return Token(GT, ">")
+            return Token(COMP_OP, ">")
 
         if self.current_char == '<':
             if self.peekn(2) == "<=":
                 self.advance()
                 self.advance()
                 self.advance()
-                return Token(LLE, "<<=")
+                return Token(AUGASSIGN, "<<=")
 
             if self.peek() == '<':
                 self.advance()
@@ -800,10 +785,10 @@ class Lexer(object):
             if self.peek() == '=':
                 self.advance()
                 self.advance()
-                return Token(LE, "<=")
+                return Token(COMP_OP, "<=")
 
             self.advance()
-            return Token(LT, "<")
+            return Token(COMP_OP, "<")
 
         if self.current_char == '\\':
             self.advance()
@@ -817,20 +802,20 @@ class Lexer(object):
             if self.peek() == '=':
                 self.advance()
                 self.advance()
-                return Token(DIFE, "^=")
+                return Token(AUGASSIGN, "^=")
             self.advance()
             return Token(DIF, "^")
 
         if self.current_char == '!' and self.peek() == "=":
             self.advance()
             self.advance()
-            return Token(NE, "!=")
+            return Token(COMP_OP, "!=")
 
         if self.current_char == "&":
             if self.peek() == '=':
                 self.advance()
                 self.advance()
-                return Token(ET, "&=")
+                return Token(AUGASSIGN, "&=")
             self.advance()
             return Token(ET, '&')
 
@@ -838,7 +823,7 @@ class Lexer(object):
             if self.peek() == '=':
                 self.advance()
                 self.advance()
-                return Token(SHUE, "|=")
+                return Token(AUGASSIGN, "|=")
             self.advance()
             return Token(SHU, "|")
 
@@ -846,7 +831,7 @@ class Lexer(object):
             if self.peek() == "=":
                 self.advance()
                 self.advance()
-                return Token(DECE, '@=')
+                return Token(AUGASSIGN, '@=')
             self.advance()
             return Token(DEC, "@")
 
@@ -854,7 +839,7 @@ class Lexer(object):
             if self.peek() == "=":
                 self.advance()
                 self.advance()
-                return Token(EQ, "==")
+                return Token(COMP_OP, "==")
             self.advance()
             return Token(ASSIGN, "=")
 
@@ -862,7 +847,7 @@ class Lexer(object):
             if self.peek() == "=":
                 self.advance()
                 self.advance()
-                return Token(YUE, "%=")
+                return Token(AUGASSIGN, "%=")
 
             self.advance()
             return Token(YU, "%")
@@ -871,7 +856,7 @@ class Lexer(object):
             if self.peek() == "=":
                 self.advance()
                 self.advance()
-                return Token(ADDE, "+=")
+                return Token(AUGASSIGN, "+=")
 
             self.advance()
             return Token(ADD, "+")
@@ -880,7 +865,7 @@ class Lexer(object):
             if self.peek() == "=":
                 self.advance()
                 self.advance()
-                return Token(SUBE, "-=")
+                return Token(AUGASSIGN, "-=")
 
             if self.peek() == ">":
                 self.advance()
@@ -894,18 +879,13 @@ class Lexer(object):
             if self.peek() == "=":
                 self.advance()
                 self.advance()
-                return Token(MULE, "*=")
+                return Token(AUGASSIGN, "*=")
 
             if self.peekn(2) == "*=":
                 self.advance()
                 self.advance()
                 self.advance()
-                return Token(POWERE, "**=")
-
-            if self.peek() == "=":
-                self.advance()
-                self.advance()
-                return Token(POWER, "*=")
+                return Token(AUGASSIGN, "**=")
 
             self.advance()
             return Token(MUL, "*")
@@ -914,13 +894,13 @@ class Lexer(object):
             if self.peek() == '=':
                 self.advance()
                 self.advance()
-                return Token(REAL_DIVE, "/=")
+                return Token(AUGASSIGN, "/=")
 
             if self.peekn(2) == '/=':
                 self.advance()
                 self.advance()
                 self.advance()
-                return Token(DIVE, "//=")
+                return Token(AUGASSIGN, "//=")
 
             if self.peek() == "/":
                 self.advance()
@@ -1012,60 +992,17 @@ class Lexer(object):
             return self.other()
 
 
-def main():
-    with open('/home/aiyane/code/python/Bytecode/test.py', "r", encoding="utf8") as f:
-        text = f.read()
-    test = """
-r\"hello\"
-u\"hello\"
-R\"hello\"
-U\"hello\"
-f\"hello\"
-F\"hello\"
-fr\"hello\"
-Fr\"hello\"
-fR\"hello\"
-FR\"helo\"
-rf\"hello\"
-rF\"hello\"
-Rf'hello'
-RF'hello'
-b\"hello\"
-B\"\"\"hello
-hello\"\"\"
-br'hello'
-Br'hello'
-bR'''hello
-hello'''
-'hello'
-"hello"
-"hello\b"
-\"\"\"hello\r
-hello\"\"\"
-'''hello
-hello'''
-2147483647
-7j
-0o177    
-0b100110111
-0xdeadbeef
-100_000_000_000
-0b_1110_0101
-3.14
-10.
-.001
-1e100
-3.14e-10
-0e0
-3.14_15_93
-"""
-    lexer = Lexer(text)
-    while True:
-        token = lexer.get_next_token()
-        if token is None:
-            break
-        print(token)
+# def main():
+#     with open('/home/aiyane/code/python/Bytecode/test.py', "r", encoding="utf8") as f:
+#         text = f.read()
+
+#     lexer = Lexer(text)
+#     while True:
+#         token = lexer.get_next_token()
+#         if token is None:
+#             break
+#         print(token)
 
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()

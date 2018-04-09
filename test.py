@@ -14,10 +14,55 @@
 b1 = [1, 2, 3, 4, 5]
 a1 = 10
 
+# 测试字符串, 数字
+r"hello"
+u"hello"
+R"hello"
+U"hello"
+# a = f"hello"
+# a = F"hello"
+# a = fr"hello"
+# a = Fr"hello"
+# a = fR"hello"
+# a = FR"helo"
+# a = rf"hello"
+# a = rF"hello"
+# a = Rf'hello'
+# a = RF'hello'
+b"hello"
+B"""hello
+hello"""
+br'hello'
+Br'hello'
+bR'''hello
+hello'''
+'hello'
+"hello"
+"hello\b"
+"""hello\r
+hello"""
+'''hello
+hello'''
+2147483647
+7j
+0o177
+0b100110111
+0xdeadbeef
+# a = 100_000_000_000
+# a = 0b_1110_0101
+3.14
+10.
+.001
+1e100
+3.14e-10
+0e0
+# a = 3.14_15_93
+
+
 class Test(object):
     def __init__(self, name):
         self.name = name
-    
+
     def haha(self):
         print(self.name)
 
