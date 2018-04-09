@@ -37,6 +37,7 @@ OINT = 'OINT'
 BINT = 'BINT'
 XINT = 'XINT'
 FLOAT = 'FLOAT'
+INUM = 'INUM'
 ID = 'ID'
 STR = 'STR'
 BSTR = 'BSTR'
@@ -723,14 +724,20 @@ class Lexer(object):
 
     def imagnumber(self):
         # (floatnumber | digitpart) ("j" | "J")
+        pos = self.pos
         try:
             result = self.floatnumber()
         except CharacterError:
+            self.pos = pos
+            self.current_char = self.text[pos]
             result = self.digitpart()
 
         if self.current_char in ("j", "J"):
             result += self.current_char
             self.advance()
+            cur_char = self.current_char
+            if cur_char.isalpha() or cur_char.isdigit():
+                self.error()
             return result
 
         self.error()
@@ -738,11 +745,16 @@ class Lexer(object):
     def number(self):
         pos = self.pos
         try:
-            return Token(FLOAT, float(self.floatnumber()))
+            return Token(INUM, complex(self.imagnumber()))
         except CharacterError:
-            self.pos = pos
-            self.current_char = self.text[self.pos]
-            return self.integer()
+            try:
+                self.pos = pos
+                self.current_char = self.text[self.pos]
+                return Token(FLOAT, float(self.floatnumber()))
+            except CharacterError:
+                self.pos = pos
+                self.current_char = self.text[self.pos]
+                return self.integer()
 
     def error(self):
         raise CharacterError('Invalid character')
@@ -857,6 +869,7 @@ hello\"\"\"
 '''hello
 hello'''
 2147483647
+7j
 0o177    
 0b100110111
 0xdeadbeef
