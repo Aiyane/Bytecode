@@ -990,6 +990,7 @@ class Lexer(object):
                 return Token(CEMI, ";")
 
             return self.other()
+        return Token('ENDMARKER', 'ENDMARKER')
 
 
 # def main():

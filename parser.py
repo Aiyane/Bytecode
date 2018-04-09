@@ -16,7 +16,6 @@ class Star_expr(AST):
     def __init__(self, mul, expr):
         self.mul = mul
         self.expr = expr
-        self.type = 'star_expr'
 
 
 class Expr(AST):
@@ -31,6 +30,12 @@ class Factor(AST):
     def __init__(self, tokens):
         # 因子
         self.tokens = tokens
+
+
+class IfElse(AST):
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
 
 
 class Parser(object):
@@ -49,22 +54,59 @@ class Parser(object):
 
     def comparison(self):
         # expr (comp_op expr)*
-        pass
+        node = self.expr()
+        if self.current_token.type in (COMP_OP, IN, NOT, IS):
+            tokens = []
+            while self.current_token.type in (COMP_OP, IN, NOT, IS):
+                tokens.append(self.comp_op)
+                tokens.append(self.expr())
+            return Expr(node, tokens)
+        return node
 
     def not_test(self):
         # 'not' not_test | comparison
-        pass
+        if self.current_token.type == NOT:
+            _not = self.current_token
+            self.eat(NOT)
+            token = self.not_test()
+            return Factor([_not, token])
+        return self.comparison()
 
     def and_test(self):
         # not_test ('and' not_test)*
-        pass
+        node = self.not_test()
+        if self.current_token.type == AND:
+            tokens = []
+            while self.current_token.type == AND:
+                tokens.append(self.current_token)
+                self.eat(AND)
+                tokens.append(self.not_test())
+            return Expr(node, tokens)
+        return node
 
     def or_test(self):
         # and_test ('or' and_test)*
-        pass
+        node = self.and_test()
+        if self.current_token.type == OR:
+            tokens = []
+            while self.current_token.type == OR:
+                tokens.append(self.current_token)
+                self.eat(OR)
+                tokens.append(self.and_test())
+            return Expr(node, tokens)
+        return node
 
     def test(self):
         # or_test ['if' or_test 'else' test] | lambdef
+        if self.current_token.type != LAMBDA:
+            node = self.or_test()
+            if self.current_token == IF:
+                self.eat(IF)
+                left = self.or_test()
+                self.eat(ELSE)
+                right = self.test()
+                return IfElse(left, right)
+            return node
         pass
 
     def yield_arg(self):
@@ -243,6 +285,40 @@ class Parser(object):
         token = self.current_token
         self.eat(AUGASSIGN)
         return token
+
+    def testlist_star_expr(self):
+        # (test|star_expr) (',' (test|star_expr))* [',']
+        pass
+
+    def expr_stmt(self):
+        # testlist_star_expr (annassign | augassign (yield_expr|testlist) |
+        #  ('=' (yield_expr|testlist_star_expr))*)
+        pass
+
+    def small_stmt(self):
+        #(expr_stmt | del_stmt | pass_stmt | flow_stmt |
+        #  import_stmt | global_stmt | nonlocal_stmt | assert_stmt)
+        pass
+
+    def simple_stmt(self):
+        # small_stmt (';' small_stmt)* [';'] NEWLINE
+        pass
+
+    def stmt(self):
+        # simple_stmt | compound_stmt
+        pass
+
+    def eval_input(self):
+        # testlist NEWLINE* ENDMARKER
+        pass
+
+    def file_input(self):
+        # (NEWLINE | stmt)* ENDMARKER
+        pass
+
+    def single_input(self):
+        # NEWLINE | simple_stmt | compound_stmt NEWLINE
+        pass
 
     def parse(self):
         pass
