@@ -146,7 +146,7 @@ class CharacterError(Exception):
 
 class Lexer(object):
     def __init__(self, text):
-        self.text = text
+        self.text = text + '\n'
         self.pos = 0
         self.current_char = self.text[self.pos]
 

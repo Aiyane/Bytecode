@@ -27,6 +27,20 @@ class BinOp(AST):
         self.right = right
 
 
+class ThreeOp(AST):
+    def __init__(self, op, left, middle, right):
+        # 三目操作符
+        self.op = op
+        self.left = left
+        self.middle = middle
+        self.right = right
+
+
+class ListObj(AST):
+    def __init__(self):
+        self.tokens = []
+
+
 class IfElse(AST):
     def __init__(self, left, req, right):
         self.left = left
@@ -102,6 +116,26 @@ class Parser(object):
         # 'yield' [yield_arg]
         pass
 
+    def testlist_comp(self):
+        # (test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )
+        node = self.star_expr() if self.current_token.type == MUL else self.test()
+        root = ListObj()
+        if self.current_token.type in (ASYNC, FOR):
+            pass
+
+        root.tokens.append(node)
+        while self.current_token.type == COMMA:
+            self.eat(COMMA)
+            try:
+                root.tokens.append(self.star_expr()
+                                   if self.current_token == MUL else self.test())
+            except SynError:
+                break
+        return root if len(root.tokens) > 1 else node
+
+    def dictorsetmaker(self):
+        pass
+
     def atom(self):
         # ('(' [yield_expr|testlist_comp] ')' |
         #    '[' [testlist_comp] ']' |
@@ -116,18 +150,92 @@ class Parser(object):
             self.eat(DOT)
             self.eat(DOT)
             return Token('OMIT', '...')
-        pass
+        if self.current_token.type == LSB:
+            op = self.current_token
+            self.eat(LSB)
+            token = self.testlist_comp()
+            self.eat(RSB)
+            return UnaryOp(op, token)
+        if self.current_token == LB:
+            op = self.current_token
+            self.eat(LB)
+            token = self.yield_expr() if self.current_token.type == YIELD else self.testlist_comp()
+            self.eat(RB)
+            return UnaryOp(op, token)
+
+        op = self.current_token
+        self.eat(LCB)
+        token = self.dictorsetmaker()
+        self.eat(RCB)
+        return UnaryOp(op, token)
 
     def arglist(self):
         pass
 
     def subscriptlist(self):
-        pass
+        # subscript (',' subscript)* [',']
+        node = self.subscript()
+        root = ListObj()
+        root.tokens.append(node)
+        while self.current_token.type == COMMA:
+            self.eat(COMMA)
+            try:
+                root.tokens.append(self.subscript())
+            except SynError:
+                break
+        return root if len(root.tokens) > 1 else node
+
+    def sliceop(self):
+        # ':' [test]
+        self.eat(COLON)
+        return self.test()
+
+    def subscript(self):
+        # test | [test] ':' [test] [sliceop]
+        test_head = (LAMBDA, NOT, ADD, SUB, OPPO, LB, LCB, LSB, AWAIT, INT, INUM, FLOAT,
+                     OINT, BINT, XINT, ID, DOT, NONE, TRUE, FALSE, STR, BSTR)
+        node = None
+        if self.current_token.type in test_head:
+            node = self.test()
+
+        if self.current_token.type == COLON:
+            op = self.current_token
+            self.eat(op)
+
+            if self.current_token.type in test_head:
+                middle = self.test()
+
+                if self.current_token.type == COLON:
+                    right = self.sliceop()
+                    op = Token('slices', ':::')
+                    if node:
+                        return ThreeOp(op, node, middle, right)
+                    return ThreeOp(op, None, middle, right)
+
+                elif node:
+                    return BinOp(node, op, middle)
+                return BinOp(None, op, middle)
+
+            elif self.current_token.type == COLON:
+                right = self.sliceop()
+                op = Token('slice', '::')
+                if node:
+                    return BinOp(node, op, right)
+                return BinOp(None, op, right)
+
+            elif node:
+                return BinOp(node, op, None)
+            return BinOp(None, op, None)
+
+        elif node:
+            return node
+        self.error()
 
     def trailer(self):
         # '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
         if self.current_token.type == LB:
             lb = self.current_token
+            lb.value = '()'
             self.eat(LB)
             token = self.arglist()
             self.eat(RB)
@@ -135,6 +243,7 @@ class Parser(object):
 
         if self.current_token.type == LSB:
             lsb = self.current_token
+            lsb.value = '[]'
             self.eat(LSB)
             token = self.subscriptlist()
             self.eat(RSB)
@@ -281,33 +390,33 @@ class Parser(object):
         else:
             node = self.test()
         if self.current_token.type == COMMA:
-            tokens = []
-            tokens.append(node)
+            root = ListObj()
+            root.tokens.append(node)
             while self.current_token.type == COMMA:
                 self.eat(COMMA)
                 try:
                     if self.current_token.type == MUL:
-                        tokens.append(self.star_expr())
+                        root.tokens.append(self.star_expr())
                     else:
-                        tokens.append(self.test())
+                        root.tokens.append(self.test())
                 except SynError:
                     break
-            return Token('testlist_star_expr', tokens) if len(tokens) > 1 else node
+            return root if len(root.tokens) > 1 else node
         return node
 
     def testlist(self):
         # test (',' test)* [',']
         node = self.test()
         if self.current_token.type == COMMA:
-            tokens = []
-            tokens.append(node)
+            root = ListObj()
+            root.tokens.append(node)
             while self.current_token.type == COMMA:
                 self.eat(COMMA)
                 try:
-                    tokens.append(self.test())
+                    root.tokens.append(self.test())
                 except SynError:
                     break
-            return Token('testlist', tokens) if len(tokens) > 1 else node
+            return root if len(root.tokens) > 1 else node
         return node
 
     def annassign(self):
@@ -332,7 +441,11 @@ class Parser(object):
         while self.current_token.type == ASSIGN:
             op = self.current_token
             self.eat(ASSIGN)
-            pass
+            if self.current_token.type == YIELD:
+                pass
+            else:
+                right = self.testlist_star_expr()
+            node = BinOp(node, op, right)
 
         return node
 
@@ -358,14 +471,14 @@ class Parser(object):
 
     def simple_stmt(self):
         # small_stmt (';' small_stmt)* [';'] NEWLINE
-        tokens = []
-        node = self.simple_stmt()
-        tokens.append(node)
+        root = ListObj()
+        node = self.small_stmt()
+        root.tokens.append(node)
         while self.current_token.type == CEMI:
             self.eat(CEMI)
-            tokens.append(self.small_stmt())
+            root.tokens.append(self.small_stmt())
         self.eat(NEWLINE)
-        return Token('simple_stmt', tokens) if len(tokens) > 1 else node
+        return root if len(root.tokens) > 1 else node
 
     def compound_stmt(self):
         # if_stmt | while_stmt | for_stmt | try_stmt
@@ -384,31 +497,41 @@ class Parser(object):
 
     def file_input(self):
         # (NEWLINE | stmt)* ENDMARKER
-        tokens = []
+        root = ListObj()
         while True:
             if self.current_token.type == NEWLINE:
-                tokens.append(self.current_token)
+                root.tokens.append(self.current_token)
                 self.eat(NEWLINE)
             else:
-                tokens.append(self.stmt())
+                root.tokens.append(self.stmt())
             if self.current_token.type == ENDMARKER:
-                return Token('file_input', tokens)
+                return root
 
     def single_input(self):
         # NEWLINE | simple_stmt | compound_stmt NEWLINE
         pass
 
     def parse(self):
-        pass
+        node = self.file_input()
+        if self.current_token.type != ENDMARKER:
+            self.error()
+
+        return node
 
 
 def main():
-    with open('/home/aiyane/code/python/Bytecode/test.py', "r", encoding="utf8") as f:
+    with open('/home/aiyane/code/python/Bytecode/test2.py', "r", encoding="utf8") as f:
         text = f.read()
 
     lex = Lexer(text)
+    # while True:
+    #     token = lex.get_next_token()
+    #     print(token)
+    #     if token.type == ENDMARKER:
+    #         break
     parser = Parser(lex)
-    parser.parse()
+    tree = parser.parse()
+    return tree
 
 
 if __name__ == '__main__':
