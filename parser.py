@@ -12,29 +12,25 @@ class SynError(Exception):
     pass
 
 
-class Star_expr(AST):
-    def __init__(self, mul, expr):
-        self.mul = mul
-        self.expr = expr
+class UnaryOp(AST):
+    def __init__(self, op, token):
+        # 单个操作符
+        self.op = op
+        self.token = token
 
 
-class Expr(AST):
-    def __init__(self, left, tokens):
-        # 双目表达式
+class BinOp(AST):
+    def __init__(self, left, op, right):
+        # 双目操作符
+        self.op = op
         self.left = left
-        self.right = tokens
-        self.op = tokens[0].value
-
-
-class Factor(AST):
-    def __init__(self, tokens):
-        # 因子
-        self.tokens = tokens
+        self.right = right
 
 
 class IfElse(AST):
-    def __init__(self, left, right):
+    def __init__(self, left, req, right):
         self.left = left
+        self.req = req
         self.right = right
 
 
@@ -55,59 +51,48 @@ class Parser(object):
     def comparison(self):
         # expr (comp_op expr)*
         node = self.expr()
-        if self.current_token.type in (COMP_OP, IN, NOT, IS):
-            tokens = []
-            while self.current_token.type in (COMP_OP, IN, NOT, IS):
-                tokens.append(self.comp_op)
-                tokens.append(self.expr())
-            return Expr(node, tokens)
+        while self.current_token.type in (COMP_OP, IN, NOT, IS):
+            node = BinOp(node, self.comp_op(), self.expr())
         return node
 
     def not_test(self):
         # 'not' not_test | comparison
         if self.current_token.type == NOT:
-            _not = self.current_token
+            op = self.current_token
             self.eat(NOT)
-            token = self.not_test()
-            return Factor([_not, token])
+            return UnaryOp(op, self.not_test())
         return self.comparison()
 
     def and_test(self):
         # not_test ('and' not_test)*
         node = self.not_test()
-        if self.current_token.type == AND:
-            tokens = []
-            while self.current_token.type == AND:
-                tokens.append(self.current_token)
-                self.eat(AND)
-                tokens.append(self.not_test())
-            return Expr(node, tokens)
+        while self.current_token.type == AND:
+            op = self.current_token
+            self.eat(AND)
+            node = BinOp(node, op, self.not_test())
         return node
 
     def or_test(self):
         # and_test ('or' and_test)*
         node = self.and_test()
-        if self.current_token.type == OR:
-            tokens = []
-            while self.current_token.type == OR:
-                tokens.append(self.current_token)
-                self.eat(OR)
-                tokens.append(self.and_test())
-            return Expr(node, tokens)
+        while self.current_token.type == OR:
+            op = self.current_token
+            self.eat(OR)
+            node = BinOp(node, op, self.and_test())
         return node
 
     def test(self):
         # or_test ['if' or_test 'else' test] | lambdef
-        if self.current_token.type != LAMBDA:
-            node = self.or_test()
-            if self.current_token == IF:
-                self.eat(IF)
-                left = self.or_test()
-                self.eat(ELSE)
-                right = self.test()
-                return IfElse(left, right)
-            return node
-        pass
+        if self.current_token.type == LAMBDA:
+            pass
+        node = self.or_test()
+        if self.current_token == IF:
+            self.eat(IF)
+            req = self.or_test()
+            self.eat(ELSE)
+            right = self.test()
+            return IfElse(node, req, right)
+        return node
 
     def yield_arg(self):
         # 'from' test | testlist
@@ -126,11 +111,40 @@ class Parser(object):
             token = self.current_token
             self.eat(token.type)
             return token
+        if self.current_token.type == DOT:
+            self.eat(DOT)
+            self.eat(DOT)
+            self.eat(DOT)
+            return Token('OMIT', '...')
+        pass
+
+    def arglist(self):
+        pass
+
+    def subscriptlist(self):
         pass
 
     def trailer(self):
         # '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
-        pass
+        if self.current_token.type == LB:
+            lb = self.current_token
+            self.eat(LB)
+            token = self.arglist()
+            self.eat(RB)
+            return UnaryOp(lb, token)
+
+        if self.current_token.type == LSB:
+            lsb = self.current_token
+            self.eat(LSB)
+            token = self.subscriptlist()
+            self.eat(RSB)
+            return UnaryOp(lsb, token)
+
+        dot = self.current_token
+        self.eat(DOT)
+        token = self.current_token
+        self.eat(ID)
+        return UnaryOp(dot, token)
 
     def atom_expr(self):
         # [AWAIT] atom trailer*
@@ -140,114 +154,88 @@ class Parser(object):
             self.eat(AWAIT)
 
         node = self.atom()
-        if self.current_token.type in (LB, LSB, DOT):
-            tokens = []
-            while self.current_token.type in (LB, LSB, DOT):
-                tokens.append(self.trailer())
-            node = Expr(node, tokens)
-            return Factor([_await, node]) if _await else node
-        return Factor([_await, node]) if _await else node
+        while self.current_token.type in (LB, LSB, DOT):
+            right = self.trailer()
+            node = BinOp(node, right.op, right)
+        return UnaryOp(_await, node) if _await else node
 
     def power(self):
         # atom_expr ['**' factor]
         node = self.atom_expr()
-        tokens = []
         if self.current_token.type == POWER:
-            tokens.append(self.current_token)
+            op = self.current_token
             self.eat(POWER)
-            tokens.append(self.factor())
-            return Expr(node, tokens)
+            node = BinOp(node, op, self.factor())
         return node
 
     def factor(self):
         # ('+'|'-'|'~') factor | power
-        tokens = []
         if self.current_token.type in (ADD, SUB, OPPO):
-            tokens.append(self.current_token)
-            self.eat(self.current_token.type)
-            tokens.append(self.factor())
-            return Factor(tokens)
-        else:
-            return self.power()
+            op = self.current_token
+            self.eat(op.type)
+            token = self.factor()
+            return UnaryOp(op, token)
+        return self.power()
 
     def term(self):
         # factor (('*'|'@'|'/'|'%'|'//') factor)*
         node = self.factor()
-        if self.current_token.type in (MUL, DEC, REAL_DIV, YU, DIV):
-            tokens = []
-            while self.current_token.type in (MUL, DEC, REAL_DIV, YU, DIV):
-                tokens.append(self.current_token)
-                self.eat(self.current_token.type)
-                tokens.append(self.factor())
-            return Expr(node, tokens)
+        while self.current_token.type in (MUL, DEC, REAL_DIV, YU, DIV):
+            op = self.current_token
+            self.eat(op.type)
+            node = BinOp(node, op, self.factor())
         return node
 
     def arith_expr(self):
         # term (('+'|'-') term)*
         node = self.term()
-        if self.current_token.type in (ADD, SUB):
-            tokens = []
-            while self.current_token.type in (ADD, SUB):
-                tokens.append(self.current_token)
-                self.eat(self.current_token.type)
-                tokens.append(self.term())
-            return Expr(node, tokens)
+        while self.current_token.type in (ADD, SUB):
+            op = self.current_token
+            self.eat(op.type)
+            node = BinOp(node, op, self.term())
         return node
 
     def shift_expr(self):
         # arith_expr (('<<'|'>>') arith_expr)*
         node = self.arith_expr()
-        if self.current_token.type in (LL, RR):
-            tokens = []
-            while self.current_token.type in (LL, RR):
-                tokens.append(self.current_token)
-                self.eat(self.current_token.type)
-                tokens.append(self.arith_expr())
-            return Expr(node, tokens)
+        while self.current_token.type in (LL, RR):
+            op = self.current_token
+            self.eat(op.type)
+            node = BinOp(node, op, self.arith_expr())
         return node
 
     def and_expr(self):
         # shift_expr ('&' shift_expr)*
         node = self.shift_expr()
-        if self.current_token.type == ET:
-            tokens = []
-            while self.current_token.type == ET:
-                tokens.append(self.current_token)
-                self.eat(ET)
-                tokens.append(self.shift_expr())
-            return Expr(node, tokens)
+        while self.current_token.type == ET:
+            op = self.current_token
+            self.eat(ET)
+            node = BinOp(node, op, self.shift_expr())
         return node
 
     def xor_expr(self):
         # and_expr ('^' and_expr)*
         node = self.and_expr()
-        if self.current_token.type == DIF:
-            tokens = []
-            while self.current_token.type == DIF:
-                tokens.append(self.current_token)
-                self.eat(DIF)
-                tokens.append(self.and_expr())
-            return Expr(node, tokens)
+        while self.current_token.type == DIF:
+            op = self.current_token
+            self.eat(DIF)
+            node = BinOp(node, op, self.and_expr())
         return node
 
     def expr(self):
         # xor_expr ('|' xor_expr)*
         node = self.xor_expr()
-        if self.current_token == SHU:
-            tokens = []
-            while self.current_token == SHU:
-                tokens.append(self.current_token)
-                self.eat(SHU)
-                tokens.append(self.xor_expr())
-            return Expr(node, tokens)
+        while self.current_token == SHU:
+            op = self.current_token
+            self.eat(SHU)
+            node = BinOp(node, op, self.xor_expr())
         return node
 
     def star_expr(self):
         # '*' expr
-        mul = self.current_token
+        op = self.current_token
         self.eat(MUL)
-        expr = self.expr()
-        return Star_expr(mul, expr)
+        return UnaryOp(op, self.expr())
 
     def comp_op(self):
         # '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
@@ -288,25 +276,107 @@ class Parser(object):
 
     def testlist_star_expr(self):
         # (test|star_expr) (',' (test|star_expr))* [',']
+        if self.current_token.type == MUL:
+            node = self.star_expr()
+        else:
+            node = self.test()
+        if self.current_token.type == COMMA:
+            tokens = []
+            tokens.append(node)
+            while self.current_token.type == COMMA:
+                self.eat(COMMA)
+                try:
+                    if self.current_token.type == MUL:
+                        tokens.append(self.star_expr())
+                    else:
+                        tokens.append(self.test())
+                except SynError:
+                    break
+            return Token('testlist_star_expr', tokens) if len(tokens) > 1 else node
+        return node
+
+    def testlist(self):
+        # test (',' test)* [',']
+        node = self.test()
+        if self.current_token.type == COMMA:
+            tokens = []
+            tokens.append(node)
+            while self.current_token.type == COMMA:
+                self.eat(COMMA)
+                try:
+                    tokens.append(self.test())
+                except SynError:
+                    break
+            return Token('testlist', tokens) if len(tokens) > 1 else node
+        return node
+
+    def annassign(self):
+        # ':' test ['=' test]
         pass
 
     def expr_stmt(self):
         # testlist_star_expr (annassign | augassign (yield_expr|testlist) |
         #  ('=' (yield_expr|testlist_star_expr))*)
-        pass
+        node = self.testlist_star_expr()
+
+        if self.current_token.type == COLON:
+            pass
+
+        if self.current_token.type == AUGASSIGN:
+            op = self.current_token
+            self.eat(AUGASSIGN)
+            if self.current_token.type == YIELD:
+                pass
+            return BinOp(node, op, self.testlist())
+
+        while self.current_token.type == ASSIGN:
+            op = self.current_token
+            self.eat(ASSIGN)
+            pass
+
+        return node
 
     def small_stmt(self):
         #(expr_stmt | del_stmt | pass_stmt | flow_stmt |
         #  import_stmt | global_stmt | nonlocal_stmt | assert_stmt)
-        pass
+        cur_token = self.current_token
+        if cur_token.value == 'del':
+            pass
+        if cur_token.type == PASS_STMT:
+            pass
+        if cur_token.type in (BREAK, CONTINUE, RET, YIELD, RAISE):
+            pass
+        if cur_token.type in (FROM, IMPORT):
+            pass
+        if cur_token.type == GLOBAL:
+            pass
+        if cur_token.type == NONLOCAL:
+            pass
+        if cur_token.type == ASSERT:
+            pass
+        return self.expr_stmt()
 
     def simple_stmt(self):
         # small_stmt (';' small_stmt)* [';'] NEWLINE
+        tokens = []
+        node = self.simple_stmt()
+        tokens.append(node)
+        while self.current_token.type == CEMI:
+            self.eat(CEMI)
+            tokens.append(self.small_stmt())
+        self.eat(NEWLINE)
+        return Token('simple_stmt', tokens) if len(tokens) > 1 else node
+
+    def compound_stmt(self):
+        # if_stmt | while_stmt | for_stmt | try_stmt
+        # | with_stmt | funcdef | classdef | decorated | async_stmt
         pass
 
     def stmt(self):
         # simple_stmt | compound_stmt
-        pass
+        if self.current_token.type in (IF, WHILE, FOR, TRY, WITH, DEF, CLASS, DEC, ASYNC):
+            pass
+        return self.simple_stmt()
 
     def eval_input(self):
         # testlist NEWLINE* ENDMARKER
@@ -314,7 +384,15 @@ class Parser(object):
 
     def file_input(self):
         # (NEWLINE | stmt)* ENDMARKER
-        pass
+        tokens = []
+        while True:
+            if self.current_token.type == NEWLINE:
+                tokens.append(self.current_token)
+                self.eat(NEWLINE)
+            else:
+                tokens.append(self.stmt())
+            if self.current_token.type == ENDMARKER:
+                return Token('file_input', tokens)
 
     def single_input(self):
         # NEWLINE | simple_stmt | compound_stmt NEWLINE

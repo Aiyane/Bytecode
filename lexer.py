@@ -42,10 +42,11 @@ ID = 'ID'
 STR = 'STR'
 BSTR = 'BSTR'
 NEWLINE = 'NEWLINE'
+ENDMARKER = 'ENDMARKER'
 # 关键词
 IS = 'IS'
-CONTINUE_STMT = 'CONTINUE_STMT'
-BREAK_STMT = 'BREAK_STMT'
+CONTINUE = 'CONTINUE'
+BREAK = 'BREAK'
 WHILE = 'WHILE'
 FOR = 'FOR'
 RET = 'RET'
@@ -76,6 +77,7 @@ EXCEPT = 'EXCEPT'
 IN = 'IN'
 RAISE = 'RAISE'
 AWAIT = 'AWAIT'
+ASYNC = 'ASYNC'
 
 
 class Token(object):
@@ -102,8 +104,8 @@ class Token(object):
 # 关键字
 KEY_WORDS = {
     'is': Token(IS, 'IS'),
-    'continue': Token(CONTINUE_STMT, 'CONTINUE_STMT'),
-    'break': Token(BREAK_STMT, 'BREAK_STMT'),
+    'continue': Token(CONTINUE, 'CONTINUE'),
+    'break': Token(BREAK, 'BREAK'),
     'while': Token(WHILE, 'WHILE'),
     'for': Token(FOR, 'FOR'),
     'return': Token(RET, 'RET'),
@@ -133,7 +135,8 @@ KEY_WORDS = {
     'except': Token(EXCEPT, 'EXCEPT'),
     'in': Token(IN, 'IN'),
     'raise': Token(RAISE, 'RAISE'),
-    'await': Token(AWAIT, 'AWAIT')
+    'await': Token(AWAIT, 'AWAIT'),
+    'async': Token(ASYNC, 'ASYNC'),
 }
 
 
@@ -990,7 +993,7 @@ class Lexer(object):
                 return Token(CEMI, ";")
 
             return self.other()
-        return Token('ENDMARKER', 'ENDMARKER')
+        return Token(ENDMARKER, 'ENDMARKER')
 
 
 # def main():
@@ -1000,9 +1003,9 @@ class Lexer(object):
 #     lexer = Lexer(text)
 #     while True:
 #         token = lexer.get_next_token()
-#         if token is None:
-#             break
 #         print(token)
+#         if token.type == ENDMARKER:
+#             break
 
 
 # if __name__ == '__main__':
