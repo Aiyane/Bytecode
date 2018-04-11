@@ -1,56 +1,107 @@
-digraph G {
+digraph astgraph {
     node [shape=circle, fontsize=12, fontname="Courier", height=.1];
     ranksep=.3;
     edge [arrowsize=.5]
-    root -> "=_1"
-    "=_1" -> "num_2"
-    "=_1" -> "-_3"
-    "-_3" -> "+_4"
-    "+_4" -> "+_5"
-    "+_5" -> "2_6"
-    "+_5" -> "3_7"
-    "+_4" -> "*_8"
-    "*_8" -> "4_9"
-    "*_8" -> "5_10"
-    "-_3" -> "/_11"
-    "/_11" -> "7_12"
-    "/_11" -> "3_13"
-    root -> "=_14"
-    "=_14" -> "my_list_15"
-    "=_14" -> "[_16"
-    "[_16" -> "6_17"
-    "[_16" -> "5_18"
-    "[_16" -> "4_19"
-    root -> "=_20"
-    "=_20" -> "result_21"
-    "=_20" -> "*_22"
-    "*_22" -> "num_23"
-    "*_22" -> "[]_24"
-    "[]_24" -> "my_list_25"
-    "[]_24" -> "[]_26"
-    "[]_26" -> "2_27"
-    root -> "IfExpr_28"
-    "IfExpr_28" -> "IfItem_29"
-    "IfItem_29" -> "<_30"
-    "<_30" -> "num_31"
-    "<_30" -> "10_32"
-    "IfItem_29" -> "=_33"
-    "=_33" -> "b_34"
-    "=_33" -> "12_35"
-    "IfExpr_28" -> "IfItem_36"
-    "IfItem_36" -> "<_37"
-    "<_37" -> "num_38"
-    "<_37" -> "20_39"
-    "IfItem_36" -> "=_40"
-    "=_40" -> "b_41"
-    "=_40" -> "22_42"
-    "IfExpr_28" -> "Else_43"
-    "Else_43" -> "=_44"
-    "=_44" -> "b_45"
-    "=_44" -> "0_46"
-    "Else_43" -> "=_47"
-    "=_47" -> "c1_48"
-    "=_47" -> "+_49"
-    "+_49" -> "b_50"
-    "+_49" -> "num_51"
+    node1 [label="=:BinOp"]
+    root -> node1
+    node2 [label="num"]
+    node1 -> node2
+    node3 [label="-:BinOp"]
+    node1 -> node3
+    node4 [label="+:BinOp"]
+    node3 -> node4
+    node5 [label="+:BinOp"]
+    node4 -> node5
+    node6 [label="2"]
+    node5 -> node6
+    node7 [label="3"]
+    node5 -> node7
+    node8 [label="*:BinOp"]
+    node4 -> node8
+    node9 [label="4"]
+    node8 -> node9
+    node10 [label="5"]
+    node8 -> node10
+    node11 [label="/:BinOp"]
+    node3 -> node11
+    node12 [label="7"]
+    node11 -> node12
+    node13 [label="3"]
+    node11 -> node13
+    node14 [label="=:BinOp"]
+    root -> node14
+    node15 [label="my_list"]
+    node14 -> node15
+    node16 [label="[:UnaryOp"]
+    node14 -> node16
+    node17 [label="6"]
+    node16 -> node17
+    node18 [label="5"]
+    node16 -> node18
+    node19 [label="4"]
+    node16 -> node19
+    node20 [label="=:BinOp"]
+    root -> node20
+    node21 [label="result"]
+    node20 -> node21
+    node22 [label="*:BinOp"]
+    node20 -> node22
+    node23 [label="num"]
+    node22 -> node23
+    node24 [label="[]:BinOp"]
+    node22 -> node24
+    node25 [label="my_list"]
+    node24 -> node25
+    node26 [label="[]:UnaryOp"]
+    node24 -> node26
+    node27 [label="2"]
+    node26 -> node27
+    node28 [label="IfExpr"]
+    root -> node28
+    node29 [label="IfItem"]
+    node28 -> node29
+    node30 [label="<:BinOp"]
+    node29 -> node30
+    node31 [label="num"]
+    node30 -> node31
+    node32 [label="10"]
+    node30 -> node32
+    node33 [label="=:BinOp"]
+    node29 -> node33
+    node34 [label="b"]
+    node33 -> node34
+    node35 [label="12"]
+    node33 -> node35
+    node36 [label="IfItem"]
+    node28 -> node36
+    node37 [label="<:BinOp"]
+    node36 -> node37
+    node38 [label="num"]
+    node37 -> node38
+    node39 [label="20"]
+    node37 -> node39
+    node40 [label="=:BinOp"]
+    node36 -> node40
+    node41 [label="b"]
+    node40 -> node41
+    node42 [label="22"]
+    node40 -> node42
+    node43 [label="Else"]
+    node28 -> node43
+    node44 [label="=:BinOp"]
+    node43 -> node44
+    node45 [label="b"]
+    node44 -> node45
+    node46 [label="0"]
+    node44 -> node46
+    node47 [label="=:BinOp"]
+    node43 -> node47
+    node48 [label="c1"]
+    node47 -> node48
+    node49 [label="+:BinOp"]
+    node47 -> node49
+    node50 [label="b"]
+    node49 -> node50
+    node51 [label="num"]
+    node49 -> node51
 }
