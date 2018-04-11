@@ -111,6 +111,7 @@ class Parser(object):
         if self.current_token.type == token_type:
             self.current_token = self.lexer.get_next_token()
         else:
+            print(self.current_token)
             self.error()
 
     def comparison(self):

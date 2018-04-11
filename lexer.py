@@ -888,6 +888,11 @@ class Lexer(object):
                 self.advance()
                 return Token(AUGASSIGN, "*=")
 
+            if self.peek() == "*":
+                self.advance()
+                self.advance()
+                return Token(POWER, "**")
+
             if self.peekn(2) == "*=":
                 self.advance()
                 self.advance()
