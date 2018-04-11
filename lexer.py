@@ -42,6 +42,8 @@ ID = 'ID'
 STR = 'STR'
 BSTR = 'BSTR'
 NEWLINE = 'NEWLINE'
+INDENT = 'INDENT'
+DEDENT = 'DEDENT'
 ENDMARKER = 'ENDMARKER'
 # 关键词
 IS = 'IS'
@@ -149,6 +151,8 @@ class Lexer(object):
         self.text = text + '\n'
         self.pos = 0
         self.current_char = self.text[self.pos]
+        self.tab = 0
+        self.temp_token = None
 
     def advance(self):
         # 向前取一个字符, 当前字符向前移动
@@ -917,6 +921,10 @@ class Lexer(object):
         raise CharacterError('Invalid character')
 
     def get_next_token(self):
+        if self.temp_token:
+            token = self.temp_token
+            self.temp_token = None
+            return token
 
         while self.current_char is not None:
             if self.current_char == '\n':
@@ -925,6 +933,14 @@ class Lexer(object):
                 while self.current_char is not None and self.current_char.isspace():
                     tab = tab + 1 if self.current_char != '\n' else 0
                     self.advance()
+                if (tab - self.tab) // 4 > 0:
+                    self.tab = tab
+                    return Token(INDENT, INDENT)
+                if (self.tab - tab) // 4 > 0:
+                    self.tab = tab
+                    self.temp_token = Token(DEDENT, DEDENT)
+
+                self.tab = tab
                 return Token(NEWLINE, tab)
 
             if self.current_char.isspace():
@@ -996,17 +1012,13 @@ class Lexer(object):
         return Token(ENDMARKER, 'ENDMARKER')
 
 
-# def main():
-#     with open('/home/aiyane/code/python/Bytecode/test.py', "r", encoding="utf8") as f:
-#         text = f.read()
+if __name__ == '__main__':
+    with open('/home/aiyane/code/python/Bytecode/test2.py', "r", encoding="utf8") as f:
+        text = f.read()
 
-#     lexer = Lexer(text)
-#     while True:
-#         token = lexer.get_next_token()
-#         print(token)
-#         if token.type == ENDMARKER:
-#             break
-
-
-# if __name__ == '__main__':
-#     main()
+    lexer = Lexer(text)
+    while True:
+        token = lexer.get_next_token()
+        print(token)
+        if token.type == ENDMARKER:
+            break

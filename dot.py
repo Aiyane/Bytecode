@@ -3,7 +3,6 @@
 # dot.py
 from parser import Parser
 from lexer import Lexer
-from functools import partial
 
 
 class VisitNode(object):
@@ -55,6 +54,36 @@ class VisitNode(object):
         else:
             self.visit(token, node)
 
+    def visit_IfExpr(self, root, node):
+        self.num += 1
+        token = ''.join(['"IfExpr_', str(self.num), '"'])
+        self.content += '    {} -> {}\n'.format(root, token)
+        for item in node.tokens:
+            self.visit(token, item)
+
+    def visit_IfItem(self, root, node):
+        self.num += 1
+        if node.condition:
+            token = ''.join(['"IfItem_', str(self.num), '"'])
+            self.content += '    {} -> {}\n'.format(root, token)
+            self.visit(token, node.condition)
+        else:
+            token = ''.join(['"Else_', str(self.num), '"'])
+            self.content += '    {} -> {}\n'.format(root, token)
+        self.visit(token, node.stmt)
+
+    def visit_ThreeOp(self, root, node):
+        self.num += 1
+        token = ''.join(['"', node.op.value, '_', str(self.num), '"'])
+        self.content += "    {} -> {}\n".format(root, token)
+
+        if node.left:
+            self.visit(token, node.left)
+        if node.middle:
+            self.visit(token, node.middle)
+        if node.right:
+            self.visit(token, node.right)
+
     def visit(self, root, node):
         method_name = 'visit_' + type(node).__name__
         visitor = getattr(self, method_name, self.generic_visit)
@@ -64,7 +93,7 @@ class VisitNode(object):
         raise Exception('No visit_{} method'.format(type(node).__name__))
 
 
-def main():
+if __name__ == '__main__':
     with open('/home/aiyane/code/python/Bytecode/test2.py', "r", encoding="utf8") as f:
         text = f.read()
 
@@ -76,7 +105,3 @@ def main():
     with open('res.dot', 'w', encoding="utf8") as f:
         f.write(res)
     # dot res.dot -T png -o out.png
-
-
-if __name__ == '__main__':
-    main()

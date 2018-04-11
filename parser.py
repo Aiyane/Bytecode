@@ -12,6 +12,17 @@ class SynError(Exception):
     pass
 
 
+class IfExpr(AST):
+    def __init__(self):
+        self.tokens = []
+
+
+class IfItem(AST):
+    def __init__(self, condition, stmt):
+        self.condition = condition
+        self.stmt = stmt
+
+
 class UnaryOp(AST):
     def __init__(self, op, token):
         # 单个操作符
@@ -39,13 +50,6 @@ class ThreeOp(AST):
 class ListObj(AST):
     def __init__(self):
         self.tokens = []
-
-
-class IfElse(AST):
-    def __init__(self, left, req, right):
-        self.left = left
-        self.req = req
-        self.right = right
 
 
 class Parser(object):
@@ -101,11 +105,14 @@ class Parser(object):
             pass
         node = self.or_test()
         if self.current_token == IF:
+            root = IfExpr()
             self.eat(IF)
             req = self.or_test()
+            root.tokens.append(IfItem(req, node))
             self.eat(ELSE)
             right = self.test()
-            return IfElse(node, req, right)
+            root.tokens.append(IfItem(None, right))
+            return root
         return node
 
     def yield_arg(self):
@@ -480,15 +487,53 @@ class Parser(object):
         self.eat(NEWLINE)
         return root if len(root.tokens) > 1 else node
 
+    def suite(self):
+        # simple_stmt | NEWLINE INDENT stmt+ DEDENT
+        if self.current_token.type in (NEWLINE, INDENT):
+            self.eat(self.current_token.type)
+            node = self.stmt()
+            root = ListObj()
+            root.tokens.append(node)
+            while self.current_token.type != DEDENT:
+                root.tokens.append(self.stmt())
+            self.eat(DEDENT)
+            return root if len(root.tokens) > 1 else node
+
+        return self.simple_stmt()
+
+    def if_stmt(self):
+        # 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
+        root = IfExpr()
+        self.eat(IF)
+        condition = self.test()
+        self.eat(COLON)
+        stmt = self.suite()
+        root.tokens.append(IfItem(condition, stmt))
+
+        while self.current_token.type == ELIF:
+            self.eat(ELIF)
+            condition = self.test()
+            self.eat(COLON)
+            stmt = self.suite()
+            root.tokens.append(IfItem(condition, stmt))
+        if self.current_token.type == ELSE:
+            self.eat(ELSE)
+            self.eat(COLON)
+            stmt = self.suite()
+            root.tokens.append(IfItem(None, stmt))
+        return root
+
     def compound_stmt(self):
         # if_stmt | while_stmt | for_stmt | try_stmt
         # | with_stmt | funcdef | classdef | decorated | async_stmt
+        if self.current_token.type == IF:
+            return self.if_stmt()
         pass
 
     def stmt(self):
         # simple_stmt | compound_stmt
         if self.current_token.type in (IF, WHILE, FOR, TRY, WITH, DEF, CLASS, DEC, ASYNC):
-            pass
+            return self.compound_stmt()
         return self.simple_stmt()
 
     def eval_input(self):
@@ -519,7 +564,7 @@ class Parser(object):
         return node
 
 
-def main():
+if __name__ == '__main__':
     with open('/home/aiyane/code/python/Bytecode/test2.py', "r", encoding="utf8") as f:
         text = f.read()
 
@@ -531,8 +576,4 @@ def main():
     #         break
     parser = Parser(lex)
     tree = parser.parse()
-    return tree
-
-
-if __name__ == '__main__':
-    main()
+    print('end')
