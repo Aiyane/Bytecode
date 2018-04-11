@@ -12,6 +12,21 @@ class SynError(Exception):
     pass
 
 
+class ForExpr(AST):
+    def __init__(self, exprlist, testlist, stmt):
+        self.exprlist = exprlist
+        self.testlist = testlist
+        self.stmt = stmt
+        self.other = None
+
+
+class WhileExpr(AST):
+    def __init__(self, condition, stmt):
+        self.condition = condition
+        self.stmt = stmt
+        self.other = None
+
+
 class IfExpr(AST):
     def __init__(self):
         self.tokens = []
@@ -414,17 +429,15 @@ class Parser(object):
     def testlist(self):
         # test (',' test)* [',']
         node = self.test()
-        if self.current_token.type == COMMA:
-            root = ListObj()
-            root.tokens.append(node)
-            while self.current_token.type == COMMA:
-                self.eat(COMMA)
-                try:
-                    root.tokens.append(self.test())
-                except SynError:
-                    break
-            return root if len(root.tokens) > 1 else node
-        return node
+        root = ListObj()
+        root.tokens.append(node)
+        while self.current_token.type == COMMA:
+            self.eat(COMMA)
+            try:
+                root.tokens.append(self.test())
+            except SynError:
+                break
+        return root if len(root.tokens) > 1 else node
 
     def annassign(self):
         # ':' test ['=' test]
@@ -523,11 +536,89 @@ class Parser(object):
             root.tokens.append(IfItem(None, stmt))
         return root
 
+    def while_stmt(self):
+        # 'while' test ':' suite ['else' ':' suite]
+        self.eat(WHILE)
+        condition = self.test()
+        self.eat(COLON)
+        stmt = self.suite()
+        root = WhileExpr(condition, stmt)
+        if self.current_token.type == ELSE:
+            self.eat(ELSE)
+            self.eat(COLON)
+            root.other = self.suite()
+        return root
+
+    def exprlist(self):
+        # (expr|star_expr) (',' (expr|star_expr))* [',']
+        if self.current_token.type == MUL:
+            node = self.star_expr()
+        else:
+            node = self.expr()
+        root = ListObj()
+        root.tokens.append(node)
+        while self.current_token.type == COMMA:
+            self.eat(COMMA)
+            try:
+                if self.current_token.type == MUL:
+                    root.tokens.append(self.star_expr())
+                else:
+                    root.tokens.append(self.expr())
+            except SynError:
+                break
+        return root if len(root.tokens) > 1 else node
+
+    def for_stmt(self):
+        # 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
+        self.eat(FOR)
+        _exprlist = self.exprlist()
+        self.eat(IN)
+        _testlist = self.testlist()
+        self.eat(COLON)
+        root = ForExpr(_exprlist, _testlist, self.suite())
+        if self.current_token.type == ELSE:
+            self.eat(ELSE)
+            self.eat(COLON)
+            root.other = self.suite()
+        return root
+
+    def typedargslist(self):
+        # (tfpdef ['=' test] (',' tfpdef ['=' test])* [',' [
+        #         '*' [tfpdef] (',' tfpdef ['=' test])* [',' ['**' tfpdef [',']]]
+        #       | '**' tfpdef [',']]]
+        #   | '*' [tfpdef] (',' tfpdef ['=' test])* [',' ['**' tfpdef [',']]]
+        #   | '**' tfpdef [','])
+        pass
+
+    def parameters(self):
+        # '(' [typedargslist] ')'
+        self.eat(LB)
+        if self.current_token.type == RB:
+            self.eat(RB)
+            return ListObj()
+        token = self.typedargslist()
+        self.eat(RB)
+        return token
+
+    def funcdef(self):
+        # 'def' NAME parameters ['->' test] ':' suite
+        self.eat(DEF)
+        name = self.current_token
+        self.eat(ID)
+        params = self.parameters()
+        pass
+
     def compound_stmt(self):
         # if_stmt | while_stmt | for_stmt | try_stmt
         # | with_stmt | funcdef | classdef | decorated | async_stmt
         if self.current_token.type == IF:
             return self.if_stmt()
+        if self.current_token.type == WHILE:
+            return self.while_stmt()
+        if self.current_token.type == FOR:
+            return self.for_stmt()
+        if self.current_token.type == DEF:
+            return self.funcdef()
         pass
 
     def stmt(self):

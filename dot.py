@@ -21,7 +21,7 @@ class VisitNode(object):
             if hasattr(token, 'type') and token.type == 'NEWLINE':
                 continue
             if token:
-                self.visit('root', token)
+                self.visit('Program', token)
 
     def visit_BinOp(self, root, node):
         self.num += 1
@@ -48,8 +48,13 @@ class VisitNode(object):
             self.visit(node_token, node.token)
 
     def visit_ListObj(self, root, node):
+        self.num += 1
+        node_token = ''.join(['node', str(self.num)])
+        token = ''.join([node_token, ' [label="List"]'])
+        self.content += ' '*4 + token + '\n'
+        self.content += '    {} -> {}\n'.format(root, node_token)
         for token in node.tokens:
-            self.visit(root, token)
+            self.visit(node_token, token)
 
     def visit_Token(self, root, node):
         self.num += 1
@@ -61,7 +66,7 @@ class VisitNode(object):
     def visit_IfExpr(self, root, node):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
-        token = ''.join([node_token, ' [label="IfExpr', '"]'])
+        token = ''.join([node_token, ' [label="IfExpr"]'])
         self.content += ' '*4+token + '\n'
         self.content += '    {} -> {}\n'.format(root, node_token)
         for item in node.tokens:
@@ -71,15 +76,40 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         if node.condition:
-            token = ''.join([node_token, ' [label="IfItem', '"]'])
+            token = ''.join([node_token, ' [label="IfItem"]'])
             self.content += ' '*4 + token + '\n'
             self.content += '    {} -> {}\n'.format(root, node_token)
             self.visit(node_token, node.condition)
         else:
-            token = ''.join([node_token, ' [label="Else', '"]'])
+            token = ''.join([node_token, ' [label="Else"]'])
             self.content += ' '*4 + token + '\n'
             self.content += '    {} -> {}\n'.format(root, node_token)
         self.visit(node_token, node.stmt)
+
+    def visit_WhileExpr(self, root, node):
+        self.num += 1
+        node_token = ''.join(['node', str(self.num)])
+        token = ''.join([node_token, '[label="WhileExpr"]'])
+        self.content += ' '*4 + token + '\n'
+        self.content += '    {} -> {}\n'.format(root, node_token)
+
+        self.visit(node_token, node.condition)
+        self.visit(node_token, node.stmt)
+        if node.other:
+            self.visit(node_token, node.other)
+
+    def visit_ForExpr(self, root, node):
+        self.num += 1
+        node_token = ''.join(['node', str(self.num)])
+        token = ''.join([node_token, '[label="ForExpr"]'])
+        self.content += ' '*4 + token + '\n'
+        self.content += '    {} -> {}\n'.format(root, node_token)
+
+        self.visit(node_token, node.exprlist)
+        self.visit(node_token, node.testlist)
+        self.visit(node_token, node.stmt)
+        if node.other:
+            self.visit(node_token, node.other)
 
     def visit_ThreeOp(self, root, node):
         self.num += 1
@@ -100,7 +130,7 @@ class VisitNode(object):
         visitor = getattr(self, method_name, self.generic_visit)
         return visitor(root, node)
 
-    def generic_visit(self, node):
+    def generic_visit(self, root, node):
         raise Exception('No visit_{} method'.format(type(node).__name__))
 
 
