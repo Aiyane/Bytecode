@@ -141,6 +141,20 @@ KEY_WORDS = {
     'async': Token(ASYNC, 'ASYNC'),
 }
 
+# 符号表
+SIGOTABLE = {
+    '(': Token(LB, '('),
+    ')': Token(RB, ')'),
+    '[': Token(LSB, '['),
+    ']': Token(RSB, ']'),
+    '{': Token(LCB, '{'),
+    '}': Token(RCB, '}'),
+    ',': Token(COMMA, ','),
+    ':': Token(COLON, ':'),
+    '.': Token(DOT, '.'),
+    ';': Token(CEMI, ';'),
+}
+
 
 class CharacterError(Exception):
     pass
@@ -973,47 +987,13 @@ class Lexer(object):
             if self.current_char in ('"', "'"):
                 return self.stringliteral()
 
-            if self.current_char == "(":
+            token = SIGOTABLE.get(self.current_char)
+            if token:
                 self.advance()
-                return Token(LB, "(")
-
-            if self.current_char == ")":
-                self.advance()
-                return Token(RB, ")")
-
-            if self.current_char == "[":
-                self.advance()
-                return Token(LSB, "[")
-
-            if self.current_char == "]":
-                self.advance()
-                return Token(RSB, "]")
-
-            if self.current_char == "{":
-                self.advance()
-                return Token(LCB, "{")
-
-            if self.current_char == "}":
-                self.advance()
-                return Token(RCB, "}")
-
-            if self.current_char == ",":
-                self.advance()
-                return Token(COMMA, ",")
-
-            if self.current_char == ":":
-                self.advance()
-                return Token(COLON, ":")
-
-            if self.current_char == ".":
-                self.advance()
-                return Token(DOT, ".")
-
-            if self.current_char == ";":
-                self.advance()
-                return Token(CEMI, ";")
+                return token
 
             return self.other()
+
         return Token(ENDMARKER, 'ENDMARKER')
 
 
