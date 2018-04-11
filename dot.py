@@ -30,10 +30,10 @@ class VisitNode(object):
             [node_token, ' [label="', str(node.op.value), ':BinOp"]'])
         self.content += ' '*4+root2 + '\n'
         self.content += "    {} -> {}\n".format(root, node_token)
-        if node.left:
+        if node.left is not None:
             self.visit(node_token, node.left)
 
-        if node.right:
+        if node.right is not None:
             self.visit(node_token, node.right)
 
     def visit_UnaryOp(self, root0, node):
@@ -75,7 +75,7 @@ class VisitNode(object):
     def visit_IfItem(self, root, node):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
-        if node.condition:
+        if node.condition is not None:
             token = ''.join([node_token, ' [label="IfItem"]'])
             self.content += ' '*4 + token + '\n'
             self.content += '    {} -> {}\n'.format(root, node_token)
@@ -95,7 +95,7 @@ class VisitNode(object):
 
         self.visit(node_token, node.condition)
         self.visit(node_token, node.stmt)
-        if node.other:
+        if node.other is not None:
             self.visit(node_token, node.other)
 
     def visit_ForExpr(self, root, node):
@@ -118,12 +118,29 @@ class VisitNode(object):
         self.content += ' '*4 + token + '\n'
         self.content += "    {} -> {}\n".format(root, node_token)
 
-        if node.left:
+        if node.left is not None:
             self.visit(node_token, node.left)
-        if node.middle:
+        if node.middle is not None:
             self.visit(node_token, node.middle)
-        if node.right:
+        if node.right is not None:
             self.visit(node_token, node.right)
+
+    # def visit_int(self, root, node):
+    #     self.num += 1
+    #     node_token = ''.join(['node', str(self.num)])
+    #     token = ''.join([node_token, ' [label="', str(node), '"]'])
+    #     self.content += ' '*4 + token + '\n'
+    #     self.content += '    {} -> {}\n'.format(root, node_token)
+
+    # def visit_bool(self, root, node):
+    #     self.num += 1
+    #     node_token = ''.join(['node', str(self.num)])
+    #     if node is True:
+    #         token = ''.join([node_token, ' [label="True"]'])
+    #     else:
+    #         token = ''.join([node_token, ' [label="False"]'])
+    #     self.content += ' '*4 + token + '\n'
+    #     self.content += '    {} -> {}\n'.format(root, node_token)
 
     def visit(self, root, node):
         method_name = 'visit_' + type(node).__name__

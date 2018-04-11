@@ -2,6 +2,38 @@
 # -*- coding: utf-8 -*-
 # pasrer.py
 from lexer import *
+import operator
+
+BINARY_OPERATORS = {
+    POWER: operator.pow,
+    MUL: operator.mul,
+    REAL_DIV: operator.floordiv,
+    DIV: operator.truediv,
+    YU: operator.mod,
+    ADD: operator.add,
+    SUB: operator.sub,
+    LSB: operator.getitem,
+    LL: operator.lshift,
+    RR: operator.rshift,
+    ET: operator.and_,
+    DIF: operator.xor,
+    SHU: operator.or_,
+    NOT: operator.not_,
+    IS: operator.is_,
+    'is': operator.is_,
+    'not': operator.not_,
+    '<': operator.lt,
+    '<=': operator.le,
+    'is not': operator.is_not,
+    '-': operator.neg,
+    '+': operator.pos,
+    '==': operator.eq,
+    '!=': operator.ne,
+    '>': operator.gt,
+    '>=': operator.ge,
+    '[]': operator.getitem,
+    '~': operator.invert,
+}
 
 
 class AST(object):
@@ -85,7 +117,17 @@ class Parser(object):
         # expr (comp_op expr)*
         node = self.expr()
         while self.current_token.type in (COMP_OP, IN, NOT, IS):
-            node = BinOp(node, self.comp_op(), self.expr())
+            # node = BinOp(node, self.comp_op(), self.expr())
+            op = self.comp_op()
+            node2 = self.expr()
+            if op.type == COMP_OP:
+                try:
+                    node.value = BINARY_OPERATORS[op.value](
+                        node.value, node2.value)
+                except Exception:
+                    node = BinOp(node, op, node2)
+            else:
+                node = BinOp(node, op, node2)
         return node
 
     def not_test(self):
@@ -93,7 +135,13 @@ class Parser(object):
         if self.current_token.type == NOT:
             op = self.current_token
             self.eat(NOT)
-            return UnaryOp(op, self.not_test())
+            # return UnaryOp(op, self.not_test())
+            node = self.not_test()
+            try:
+                node.value = BINARY_OPERATORS[NOT](node.value)
+            except Exception:
+                node = UnaryOp(op, node)
+            return node
         return self.comparison()
 
     def and_test(self):
@@ -287,7 +335,14 @@ class Parser(object):
         node = self.atom()
         while self.current_token.type in (LB, LSB, DOT):
             right = self.trailer()
-            node = BinOp(node, right.op, right)
+            if right.lsb.value == '[]':
+                try:
+                    node.value = BINARY_OPERATORS['[]'](
+                        node.value, right.token.value)
+                except Exception:
+                    node = BinOp(node, right.op, right)
+            else:
+                node = BinOp(node, right.op, right)
         return UnaryOp(_await, node) if _await else node
 
     def power(self):
@@ -296,7 +351,12 @@ class Parser(object):
         if self.current_token.type == POWER:
             op = self.current_token
             self.eat(POWER)
-            node = BinOp(node, op, self.factor())
+            # node = BinOp(node, op, self.factor())
+            node2 = self.factor()
+            try:
+                node.value = BINARY_OPERATORS[POWER](node.value, node2.value)
+            except Exception:
+                node = BinOp(node, op, node2)
         return node
 
     def factor(self):
@@ -305,7 +365,12 @@ class Parser(object):
             op = self.current_token
             self.eat(op.type)
             token = self.factor()
-            return UnaryOp(op, token)
+            # return UnaryOp(op, token)
+            try:
+                token.value = BINARY_OPERATORS[op.value](token.value)
+            except Exception:
+                token = UnaryOp(op, token)
+            return token
         return self.power()
 
     def term(self):
@@ -314,7 +379,12 @@ class Parser(object):
         while self.current_token.type in (MUL, DEC, REAL_DIV, YU, DIV):
             op = self.current_token
             self.eat(op.type)
-            node = BinOp(node, op, self.factor())
+            # node = BinOp(node, op, self.factor())
+            node2 = self.factor()
+            try:
+                node.value = BINARY_OPERATORS[op.type](node.value, node2.value)
+            except Exception:
+                node = BinOp(node, op, node2)
         return node
 
     def arith_expr(self):
@@ -323,7 +393,12 @@ class Parser(object):
         while self.current_token.type in (ADD, SUB):
             op = self.current_token
             self.eat(op.type)
-            node = BinOp(node, op, self.term())
+            # node = BinOp(node, op, self.term())
+            node2 = self.term()
+            try:
+                node.value = BINARY_OPERATORS[op.type](node.value, node2.value)
+            except Exception:
+                node = BinOp(node, op, node2)
         return node
 
     def shift_expr(self):
@@ -332,7 +407,12 @@ class Parser(object):
         while self.current_token.type in (LL, RR):
             op = self.current_token
             self.eat(op.type)
-            node = BinOp(node, op, self.arith_expr())
+            # node = BinOp(node, op, self.arith_expr())
+            node2 = self.arith_expr()
+            try:
+                node.value = BINARY_OPERATORS[op.type](node.value, node2.value)
+            except Exception:
+                node = BinOp(node, op, node2)
         return node
 
     def and_expr(self):
@@ -341,7 +421,12 @@ class Parser(object):
         while self.current_token.type == ET:
             op = self.current_token
             self.eat(ET)
-            node = BinOp(node, op, self.shift_expr())
+            # node = BinOp(node, op, self.shift_expr())
+            node2 = self.shift_expr()
+            try:
+                node.value = BINARY_OPERATORS[ET](node.value, node2.value)
+            except Exception:
+                node = BinOp(node, op, node2)
         return node
 
     def xor_expr(self):
@@ -350,7 +435,12 @@ class Parser(object):
         while self.current_token.type == DIF:
             op = self.current_token
             self.eat(DIF)
-            node = BinOp(node, op, self.and_expr())
+            # node = BinOp(node, op, self.and_expr())
+            node2 = self.and_expr()
+            try:
+                node.value = BINARY_OPERATORS[DIF](node.value, node2.value)
+            except Exception:
+                node = BinOp(node, op, node2)
         return node
 
     def expr(self):
@@ -359,7 +449,12 @@ class Parser(object):
         while self.current_token == SHU:
             op = self.current_token
             self.eat(SHU)
-            node = BinOp(node, op, self.xor_expr())
+            # node = BinOp(node, op, self.xor_expr())
+            node2 = self.xor_expr()
+            try:
+                node.value = BINARY_OPERATORS[SHU](node.value, node2.value)
+            except Exception:
+                node = BinOp(node, op, node2)
         return node
 
     def star_expr(self):
@@ -381,14 +476,14 @@ class Parser(object):
         if self.current_token.type == IN:
             token = self.current_token
             self.eat(IN)
-            return Token(COMP_OP, 'in')
+            return Token(IN, 'in')
 
         if self.current_token.type == NOT:
             _not = self.current_token
             self.eat(NOT)
             _in = self.current_token
             self.eat(IN)
-            return Token(COMP_OP, 'not in')
+            return Token('NOTIN', 'not in')
 
         _is = self.current_token
         self.eat(IS)
@@ -466,6 +561,7 @@ class Parser(object):
             else:
                 right = self.testlist_star_expr()
             node = BinOp(node, op, right)
+            # node = BinOp(node, op, right.value)
 
         return node
 
