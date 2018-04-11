@@ -121,14 +121,14 @@ class Parser(object):
             # node = BinOp(node, self.comp_op(), self.expr())
             op = self.comp_op()
             node2 = self.expr()
-            if op.type == COMP_OP:
-                try:
-                    node.value = BINARY_OPERATORS[op.value](
-                        node.value, node2.value)
-                except Exception:
-                    node = BinOp(node, op, node2)
-            else:
-                node = BinOp(node, op, node2)
+            # if op.type == COMP_OP:
+            #     try:
+            #         node.value = BINARY_OPERATORS[op.value](
+            #             node.value, node2.value)
+            #     except Exception:
+            #         node = BinOp(node, op, node2)
+            # else:
+            node = BinOp(node, op, node2)
         return node
 
     def not_test(self):
