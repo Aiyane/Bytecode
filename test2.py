@@ -9,19 +9,19 @@ b1 = 4 > 5
 c1 = 2**3
 res = a1 - c1
 
-# while a1 > b2:
-#     num = 3 + 4 * 5
-#     a1, b2 = b2, a1
-#     my_list = [6, 5, 4]
-#     result = num * my_list[2]
+while a1 > b1:
+    num = 3 + 4 * 5
+    a1, b1 = b1, a1
+    my_list = [6, 5, 4]
+    result = num * my_list[2]
 
-#     for i in my_list:
-#         if i > 5:
-#             a1 -= 1
-#         b2 += 1
-#     else:
-#         c1 = a1 + b2
-#     a1 += 1
-#     b2 -= 1
-# else:
-#     c1 = 3
+    for i in my_list:
+        if i > 5:
+            a1 -= 1
+        b1 += 1
+    else:
+        c1 = a1 + b1
+    a1 += 1
+    b1 -= 1
+else:
+    c1 = 3

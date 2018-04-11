@@ -30,4 +30,108 @@ digraph astgraph {
     node12 -> node13
     node14 [label="c1"]
     node12 -> node14
+    node15[label="WhileExpr"]
+    Program -> node15
+    node16 [label="False"]
+    node15 -> node16
+    node17 [label="List"]
+    node15 -> node17
+    node18 [label="=:BinOp"]
+    node17 -> node18
+    node19 [label="num"]
+    node18 -> node19
+    node20 [label="23"]
+    node18 -> node20
+    node21 [label="=:BinOp"]
+    node17 -> node21
+    node22 [label="List"]
+    node21 -> node22
+    node23 [label="a1"]
+    node22 -> node23
+    node24 [label="b1"]
+    node22 -> node24
+    node25 [label="List"]
+    node21 -> node25
+    node26 [label="b1"]
+    node25 -> node26
+    node27 [label="a1"]
+    node25 -> node27
+    node28 [label="=:BinOp"]
+    node17 -> node28
+    node29 [label="my_list"]
+    node28 -> node29
+    node30 [label="[:UnaryOp"]
+    node28 -> node30
+    node31 [label="List"]
+    node30 -> node31
+    node32 [label="6"]
+    node31 -> node32
+    node33 [label="5"]
+    node31 -> node33
+    node34 [label="4"]
+    node31 -> node34
+    node35 [label="=:BinOp"]
+    node17 -> node35
+    node36 [label="result"]
+    node35 -> node36
+    node37 [label="*:BinOp"]
+    node35 -> node37
+    node38 [label="num"]
+    node37 -> node38
+    node39 [label="_"]
+    node37 -> node39
+    node40[label="ForExpr"]
+    node17 -> node40
+    node41 [label="i"]
+    node40 -> node41
+    node42 [label="my_list"]
+    node40 -> node42
+    node43 [label="List"]
+    node40 -> node43
+    node44 [label="IfExpr"]
+    node43 -> node44
+    node45 [label="IfItem"]
+    node44 -> node45
+    node46 [label=">:BinOp"]
+    node45 -> node46
+    node47 [label="i"]
+    node46 -> node47
+    node48 [label="5"]
+    node46 -> node48
+    node49 [label="-=:BinOp"]
+    node45 -> node49
+    node50 [label="a1"]
+    node49 -> node50
+    node51 [label="1"]
+    node49 -> node51
+    node52 [label="+=:BinOp"]
+    node43 -> node52
+    node53 [label="b1"]
+    node52 -> node53
+    node54 [label="1"]
+    node52 -> node54
+    node55 [label="=:BinOp"]
+    node40 -> node55
+    node56 [label="c1"]
+    node55 -> node56
+    node57 [label="a1b1"]
+    node55 -> node57
+    node58 [label="+=:BinOp"]
+    node17 -> node58
+    node59 [label="a1"]
+    node58 -> node59
+    node60 [label="1"]
+    node58 -> node60
+    node61 [label="-=:BinOp"]
+    node17 -> node61
+    node62 [label="b1"]
+    node61 -> node62
+    node63 [label="1"]
+    node61 -> node63
+    node64 [label="=:BinOp"]
+    node15 -> node64
+    node65 [label="c1"]
+    node64 -> node65
+    node66 [label="3"]
+    node64 -> node66
 }

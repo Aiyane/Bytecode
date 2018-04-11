@@ -336,7 +336,7 @@ class Parser(object):
         node = self.atom()
         while self.current_token.type in (LB, LSB, DOT):
             right = self.trailer()
-            if right.lsb.value == '[]':
+            if right.op.value == '[]':
                 try:
                     node.value = BINARY_OPERATORS['[]'](
                         node.value, right.token.value)
