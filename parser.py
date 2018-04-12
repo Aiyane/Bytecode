@@ -643,7 +643,11 @@ class Parser(object):
         if self.current_token.type == ELSE:
             self.eat(ELSE)
             self.eat(COLON)
-            root.other = self.suite()
+            other = self.suite()
+            for token in root.stmt.tokens:
+                if type(token).__name__ == 'IfExpr':
+                    root.other = other
+                    break
         return root
 
     def exprlist(self):

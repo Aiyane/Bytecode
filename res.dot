@@ -142,10 +142,4 @@ digraph astgraph {
     node68 -> node69
     node70 [label="1"]
     node68 -> node70
-    node71 [label="=:BinOp"]
-    node17 -> node71
-    node72 [label="c1"]
-    node71 -> node72
-    node73 [label="3"]
-    node71 -> node73
 }
