@@ -336,14 +336,14 @@ class Parser(object):
         node = self.atom()
         while self.current_token.type in (LB, LSB, DOT):
             right = self.trailer()
-            if right.op.value == '[]':
-                try:
-                    node.value = BINARY_OPERATORS['[]'](
-                        node.value, right.token.value)
-                except Exception:
-                    node = BinOp(node, right.op, right)
-            else:
-                node = BinOp(node, right.op, right)
+            # if right.op.value == '[]':
+            #     try:
+            #         node.value = BINARY_OPERATORS['[]'](
+            #             node.value, right.token.value)
+            #     except Exception:
+            #         node = BinOp(node, right.op, right)
+            # else:
+            node = BinOp(node, right.op, right)
         return UnaryOp(_await, node) if _await else node
 
     def power(self):
@@ -676,7 +676,11 @@ class Parser(object):
         if self.current_token.type == ELSE:
             self.eat(ELSE)
             self.eat(COLON)
-            root.other = self.suite()
+            other = self.suite()
+            for token in root.stmt.tokens:
+                if type(token).__name__ == 'IfExpr':
+                    root.other = other
+                    break
         return root
 
     def typedargslist(self):

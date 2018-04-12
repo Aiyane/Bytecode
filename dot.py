@@ -125,23 +125,6 @@ class VisitNode(object):
         if node.right is not None:
             self.visit(node_token, node.right)
 
-    # def visit_int(self, root, node):
-    #     self.num += 1
-    #     node_token = ''.join(['node', str(self.num)])
-    #     token = ''.join([node_token, ' [label="', str(node), '"]'])
-    #     self.content += ' '*4 + token + '\n'
-    #     self.content += '    {} -> {}\n'.format(root, node_token)
-
-    # def visit_bool(self, root, node):
-    #     self.num += 1
-    #     node_token = ''.join(['node', str(self.num)])
-    #     if node is True:
-    #         token = ''.join([node_token, ' [label="True"]'])
-    #     else:
-    #         token = ''.join([node_token, ' [label="False"]'])
-    #     self.content += ' '*4 + token + '\n'
-    #     self.content += '    {} -> {}\n'.format(root, node_token)
-
     def visit(self, root, node):
         method_name = 'visit_' + type(node).__name__
         visitor = getattr(self, method_name, self.generic_visit)
