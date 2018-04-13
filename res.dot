@@ -2,140 +2,146 @@ digraph astgraph {
     node [shape=circle, fontsize=12, fontname="Courier", height=.1];
     ranksep=.3;
     edge [arrowsize=.5]
-    node1 [label="=:BinOp"]
+    node1 [label="main Func"]
     Program -> node1
-    node2 [label="a1"]
+    node2 [label="Args"]
     node1 -> node2
-    node3 [label="16"]
+    node3 [label="List"]
     node1 -> node3
-    node4 [label="=:BinOp"]
-    Program -> node4
-    node5 [label="b2"]
+    node4 [label="= BinOp"]
+    node3 -> node4
+    node5 [label="a1"]
     node4 -> node5
-    node6 [label="False"]
+    node6 [label="16"]
     node4 -> node6
-    node7 [label="=:BinOp"]
-    Program -> node7
-    node8 [label="b1"]
+    node7 [label="= BinOp"]
+    node3 -> node7
+    node8 [label="b2"]
     node7 -> node8
-    node9 [label="8"]
+    node9 [label="False"]
     node7 -> node9
-    node10 [label="=:BinOp"]
-    Program -> node10
-    node11 [label="res"]
+    node10 [label="= BinOp"]
+    node3 -> node10
+    node11 [label="b1"]
     node10 -> node11
-    node12 [label="-:BinOp"]
+    node12 [label="8"]
     node10 -> node12
-    node13 [label="a1"]
-    node12 -> node13
-    node14 [label="b1"]
-    node12 -> node14
-    node15[label="WhileExpr"]
-    Program -> node15
-    node16 [label=">:BinOp"]
+    node13 [label="= BinOp"]
+    node3 -> node13
+    node14 [label="res"]
+    node13 -> node14
+    node15 [label="- BinOp"]
+    node13 -> node15
+    node16 [label="a1"]
     node15 -> node16
-    node17 [label="a1"]
-    node16 -> node17
-    node18 [label="b1"]
-    node16 -> node18
-    node19 [label="List"]
-    node15 -> node19
-    node20 [label="=:BinOp"]
+    node17 [label="b1"]
+    node15 -> node17
+    node18[label="WhileExpr"]
+    node3 -> node18
+    node19 [label="> BinOp"]
+    node18 -> node19
+    node20 [label="a1"]
     node19 -> node20
-    node21 [label="num"]
-    node20 -> node21
-    node22 [label="23"]
-    node20 -> node22
-    node23 [label="=:BinOp"]
-    node19 -> node23
-    node24 [label="List"]
+    node21 [label="b1"]
+    node19 -> node21
+    node22 [label="List"]
+    node18 -> node22
+    node23 [label="= BinOp"]
+    node22 -> node23
+    node24 [label="num"]
     node23 -> node24
-    node25 [label="a1"]
-    node24 -> node25
-    node26 [label="b1"]
-    node24 -> node26
+    node25 [label="23"]
+    node23 -> node25
+    node26 [label="= BinOp"]
+    node22 -> node26
     node27 [label="List"]
-    node23 -> node27
-    node28 [label="b1"]
+    node26 -> node27
+    node28 [label="a1"]
     node27 -> node28
-    node29 [label="a1"]
+    node29 [label="b1"]
     node27 -> node29
-    node30 [label="=:BinOp"]
-    node19 -> node30
-    node31 [label="my_list"]
+    node30 [label="List"]
+    node26 -> node30
+    node31 [label="b1"]
     node30 -> node31
-    node32 [label="[]:UnaryOp"]
+    node32 [label="a1"]
     node30 -> node32
-    node33 [label="List"]
-    node32 -> node33
-    node34 [label="6"]
+    node33 [label="= BinOp"]
+    node22 -> node33
+    node34 [label="my_list"]
     node33 -> node34
-    node35 [label="5"]
+    node35 [label="[] UnaryOp"]
     node33 -> node35
-    node36 [label="4"]
-    node33 -> node36
-    node37 [label="=:BinOp"]
-    node19 -> node37
-    node38 [label="result"]
-    node37 -> node38
-    node39 [label="*:BinOp"]
-    node37 -> node39
-    node40 [label="num"]
-    node39 -> node40
-    node41 [label="[]:BinOp"]
-    node39 -> node41
-    node42 [label="my_list"]
-    node41 -> node42
-    node43 [label="[]:UnaryOp"]
-    node41 -> node43
-    node44 [label="2"]
-    node43 -> node44
-    node45[label="ForExpr"]
-    node19 -> node45
-    node46 [label="i"]
-    node45 -> node46
-    node47 [label="my_list"]
-    node45 -> node47
-    node48 [label="List"]
-    node45 -> node48
-    node49 [label="IfExpr"]
-    node48 -> node49
-    node50 [label="IfItem"]
+    node36 [label="List"]
+    node35 -> node36
+    node37 [label="6"]
+    node36 -> node37
+    node38 [label="5"]
+    node36 -> node38
+    node39 [label="4"]
+    node36 -> node39
+    node40 [label="= BinOp"]
+    node22 -> node40
+    node41 [label="result"]
+    node40 -> node41
+    node42 [label="[] BinOp"]
+    node40 -> node42
+    node43 [label="my_list"]
+    node42 -> node43
+    node44 [label=":: BinOp"]
+    node42 -> node44
+    node45 [label="-1"]
+    node44 -> node45
+    node46[label="ForExpr"]
+    node22 -> node46
+    node47 [label="i"]
+    node46 -> node47
+    node48 [label="my_list"]
+    node46 -> node48
+    node49 [label="List"]
+    node46 -> node49
+    node50 [label="IfExpr"]
     node49 -> node50
-    node51 [label=">:BinOp"]
+    node51 [label="IfItem"]
     node50 -> node51
-    node52 [label="i"]
+    node52 [label="> BinOp"]
     node51 -> node52
-    node53 [label="5"]
-    node51 -> node53
-    node54 [label="-=:BinOp"]
-    node50 -> node54
-    node55 [label="a1"]
-    node54 -> node55
-    node56 [label="1"]
-    node54 -> node56
-    node57 [label="+=:BinOp"]
-    node48 -> node57
-    node58 [label="b1"]
-    node57 -> node58
-    node59 [label="1"]
-    node57 -> node59
-    node60 [label="=:BinOp"]
-    node45 -> node60
-    node61 [label="c1"]
-    node60 -> node61
-    node62 [label="a1b1"]
-    node60 -> node62
-    node63 [label="+=:BinOp"]
-    node19 -> node63
-    node64 [label="a1"]
-    node63 -> node64
-    node65 [label="1"]
-    node63 -> node65
-    node66 [label="-=:BinOp"]
-    node19 -> node66
-    node67 [label="b1"]
-    node66 -> node67
-    node68 [label="1"]
-    node66 -> node68
+    node53 [label="i"]
+    node52 -> node53
+    node54 [label="5"]
+    node52 -> node54
+    node55 [label="-= BinOp"]
+    node51 -> node55
+    node56 [label="a1"]
+    node55 -> node56
+    node57 [label="1"]
+    node55 -> node57
+    node58 [label="+= BinOp"]
+    node49 -> node58
+    node59 [label="b1"]
+    node58 -> node59
+    node60 [label="1"]
+    node58 -> node60
+    node61 [label="= BinOp"]
+    node46 -> node61
+    node62 [label="c1"]
+    node61 -> node62
+    node63 [label="a1b1"]
+    node61 -> node63
+    node64 [label="+= BinOp"]
+    node22 -> node64
+    node65 [label="a1"]
+    node64 -> node65
+    node66 [label="1"]
+    node64 -> node66
+    node67 [label="-= BinOp"]
+    node22 -> node67
+    node68 [label="b1"]
+    node67 -> node68
+    node69 [label="1"]
+    node67 -> node69
+    node70 [label="RET UnaryOp"]
+    node3 -> node70
+    node71 [label="c1"]
+    node70 -> node71
 }

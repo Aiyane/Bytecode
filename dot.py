@@ -27,7 +27,7 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         root2 = ''.join(
-            [node_token, ' [label="', str(node.op.value), ':BinOp"]'])
+            [node_token, ' [label="', str(node.op.value), ' BinOp"]'])
         self.content += ' '*4+root2 + '\n'
         self.content += "    {} -> {}\n".format(root, node_token)
         if node.left is not None:
@@ -40,7 +40,7 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         root = ''.join(
-            [node_token, ' [label="', str(node.op.value), ':UnaryOp"]'])
+            [node_token, ' [label="', str(node.op.value), ' UnaryOp"]'])
         self.content += ' '*4+root + '\n'
         self.content += "    {} -> {}\n".format(root0, node_token)
 
@@ -114,7 +114,7 @@ class VisitNode(object):
     def visit_ThreeOp(self, root, node):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
-        token = ''.join([node_token, ' [label="', node.op.value, ':ThreeOp"]'])
+        token = ''.join([node_token, ' [label="', node.op.value, ' ThreeOp"]'])
         self.content += ' '*4 + token + '\n'
         self.content += "    {} -> {}\n".format(root, node_token)
 
@@ -124,6 +124,47 @@ class VisitNode(object):
             self.visit(node_token, node.middle)
         if node.right is not None:
             self.visit(node_token, node.right)
+
+    def visit_Args(self, root, node):
+        self.num += 1
+        node_token = ''.join(['node', str(self.num)])
+        token = ''.join([node_token, ' [label="Args"]'])
+        self.content += ' '*4 + token + '\n'
+        self.content += '    {} -> {}\n'.format(root, node_token)
+        for token in node.args:
+            self.visit(node_token, token)
+
+    def visit_Arg(self, root, node):
+        self.num += 1
+        node_token = ''.join(['node', str(self.num)])
+        if node.default == 1:
+            token = ''.join([node_token, ' [label="*"]'])
+        elif node.default == 2:
+            token = ''.join([node_token, ' [label="**"]'])
+        else:
+            token = ''.join([node_token, ' [label="', node.name.value, '"]'])
+        self.content += ' '*4 + token + '\n'
+        self.content += '    {} -> {}'.format(root, node_token)
+
+        if not isinstance(node.default, int):
+            self.visit(node_token, node.default)
+
+    def visit_Func(self, root, node):
+        self.num += 1
+        node_token = ''.join(['node', str(self.num)])
+        token = ''.join([node_token, ' [label="', node.name.value, ' Func"]'])
+        self.content += ' '*4 + token + '\n'
+        self.content += '    {} -> {}\n'.format(root, node_token)
+
+        self.visit(node_token, node.params)
+        self.visit(node_token, node.stmt)
+        if node.ret:
+            self += 1
+            node_token2 = ''.join(['node' + str(self.num)])
+            token = ''.join([node_token2, ' [label="need ret"]'])
+            self.content += ' '*4 + token + '\n'
+            self.content += '    {} -> {}\n'.format(node_token, node_token2)
+            self.visit(node_token2, node.ret)
 
     def visit(self, root, node):
         method_name = 'visit_' + type(node).__name__

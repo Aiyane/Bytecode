@@ -162,7 +162,7 @@ class CharacterError(Exception):
 
 class Lexer(object):
     def __init__(self, text):
-        self.text = text + '\n'
+        self.text = ''.join([text, '\n'])
         self.pos = 0
         self.current_char = self.text[self.pos]
         self.tab = 0
@@ -952,6 +952,10 @@ class Lexer(object):
                 while self.current_char is not None and self.current_char.isspace():
                     tab = tab + 1 if self.current_char != '\n' else 0
                     self.advance()
+                if self.current_char == '#':
+                    self.advance()
+                    self.skip_comment()
+                    continue
                 if (tab - self.tab) // 4 > 0:
                     self.tab = tab
                     return Token(INDENT, INDENT)

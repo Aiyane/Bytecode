@@ -44,6 +44,14 @@ class SynError(Exception):
     pass
 
 
+class Func(AST):
+    def __init__(self, name, params, stmt, ret):
+        self.name = name
+        self.params = params
+        self.stmt = stmt
+        self.ret = ret
+
+
 class ForExpr(AST):
     def __init__(self, exprlist, testlist, stmt):
         self.exprlist = exprlist
@@ -92,6 +100,17 @@ class ThreeOp(AST):
         self.left = left
         self.middle = middle
         self.right = right
+
+
+class Arg(AST):
+    def __init__(self, name, default=None):
+        self.name = name
+        self.default = default
+
+
+class Args(AST):
+    def __init__(self):
+        self.args = []
 
 
 class ListObj(AST):
@@ -226,12 +245,14 @@ class Parser(object):
             return Token('OMIT', '...')
         if self.current_token.type == LSB:
             op = self.current_token
+            op.value = '[]'
             self.eat(LSB)
             token = self.testlist_comp()
             self.eat(RSB)
             return UnaryOp(op, token)
         if self.current_token == LB:
             op = self.current_token
+            op.value = '()'
             self.eat(LB)
             token = self.yield_expr() if self.current_token.type == YIELD else self.testlist_comp()
             self.eat(RB)
@@ -242,6 +263,15 @@ class Parser(object):
         token = self.dictorsetmaker()
         self.eat(RCB)
         return UnaryOp(op, token)
+
+    def return_stmt(self):
+        # 'return' [testlist]
+        op = self.current_token
+        self.eat(RET)
+        if self.current_token.type in (NEWLINE, DEDENT):
+            return op
+        else:
+            return UnaryOp(op, self.testlist())
 
     def arglist(self):
         pass
@@ -274,7 +304,7 @@ class Parser(object):
 
         if self.current_token.type == COLON:
             op = self.current_token
-            self.eat(op)
+            self.eat(COLON)
 
             if self.current_token.type in test_head:
                 middle = self.test()
@@ -346,7 +376,7 @@ class Parser(object):
             #     except Exception:
             #         node = BinOp(node, right.op, right)
             # else:
-            node = BinOp(node, right.op, right)
+            node = BinOp(node, right.op, right.token)
         return UnaryOp(_await, node) if _await else node
 
     def power(self):
@@ -569,6 +599,12 @@ class Parser(object):
 
         return node
 
+    def flow_stmt(self):
+        # break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
+        if self.current_token.type == RET:
+            return self.return_stmt()
+        pass
+
     def small_stmt(self):
         #(expr_stmt | del_stmt | pass_stmt | flow_stmt |
         #  import_stmt | global_stmt | nonlocal_stmt | assert_stmt)
@@ -578,7 +614,7 @@ class Parser(object):
         if cur_token.type == PASS_STMT:
             pass
         if cur_token.type in (BREAK, CONTINUE, RET, YIELD, RAISE):
-            pass
+            return self.flow_stmt()
         if cur_token.type in (FROM, IMPORT):
             pass
         if cur_token.type == GLOBAL:
@@ -607,9 +643,10 @@ class Parser(object):
             node = self.stmt()
             root = ListObj()
             root.tokens.append(node)
-            while self.current_token.type != DEDENT:
+            while self.current_token.type not in (DEDENT, ENDMARKER):
                 root.tokens.append(self.stmt())
-            self.eat(DEDENT)
+            if self.current_token.type == DEDENT:
+                self.eat(DEDENT)
             return root if len(root.tokens) > 1 else node
 
         return self.simple_stmt()
@@ -690,23 +727,102 @@ class Parser(object):
                     break
         return root
 
+    def tfpdef(self):
+        # NAME [':' test]
+        node = self.current_token
+        self.eat(ID)
+        if self.current_token == COLON:
+            op = self.current_token
+            self.eat(COLON)
+            node = BinOp(node, op, self.test())
+        return node
+
     def typedargslist(self):
-        # (tfpdef ['=' test] (',' tfpdef ['=' test])* [',' [
-        #         '*' [tfpdef] (',' tfpdef ['=' test])* [',' ['**' tfpdef [',']]]
-        #       | '**' tfpdef [',']]]
-        #   | '*' [tfpdef] (',' tfpdef ['=' test])* [',' ['**' tfpdef [',']]]
-        #   | '**' tfpdef [','])
-        pass
+        # '**' tfpdef [',']
+        if self.current_token.type == POWER:
+            self.eat(POWER)
+            arg = Arg(self.tfpdef(), 2)
+            if self.current_token.type == COMMA:
+                self.eat(COMMA)
+            return arg
+        """
+        '*' [tfpdef] (',' tfpdef ['=' test])*
+        [
+            ','['**' tfpdef [',']]
+        ]
+        """
+        if self.current_token.type == MUL:
+            self.eat(MUL)
+            args = Args()
+            if self.current_token == ID:
+                arg = Arg(self.typdef(), 1)
+                args.tokens.append(arg)
+            while self.current_token == COMMA:
+                self.eat(COMMA)
+                if self.current_token.type == ID:
+                    arg = self.tfpdef()
+                    if self.current_token.type == ASSIGN:
+                        self.eat(ASSIGN)
+                        args.tokens.append(Arg(arg, self.test()))
+                    else:
+                        args.tokens.append(Arg(arg, 0))
+                elif self.current_token.type == POWER:
+                    args.tokens.append(self.typedargslist())
+                    break
+            if len(args.tokens) == 0:
+                return Arg(Token(MUL, '*'))
+            return args if len(args) > 1 else arg
+
+        """
+        tfpdef ['=' test] (',' tfpdef ['=' test])*
+        [
+            ','
+            [
+                '*' [tfpdef] (',' tfpdef ['=' test])*
+                [
+                    ','['**' tfpdef [',']]
+                ]
+            |
+                '**' tfpdef [',']
+            ]
+        ]
+        """
+        arg = self.tfpdef()
+        if self.current_token.type == ASSIGN:
+            self.eat(ASSIGN)
+            arg = Arg(arg, self.test())
+        else:
+            arg = Arg(arg, 0)
+
+        args = Args()
+        args.token.append(arg)
+        if self.current_token.type == COMMA:
+            while self.current_token.type == COMMA:
+                self.eat(COMMA)
+                if self.current_token.type == ID:
+                    arg = self.tfpdef()
+                    if self.current_token.type == ASSIGN:
+                        args.tokens.append(Arg(arg, self.test()))
+                    else:
+                        args.tokens.append(Arg(arg, 0))
+                else:
+                    arg = self.typedargslist()
+                    if hasattr(arg, 'tokens'):
+                        args.tokens.extend(arg.tokens)
+                    else:
+                        args.tokens.append(arg)
+                    break
+        return args if len(args.tokens) > 1 else arg
 
     def parameters(self):
         # '(' [typedargslist] ')'
         self.eat(LB)
         if self.current_token.type == RB:
             self.eat(RB)
-            return ListObj()
-        token = self.typedargslist()
+            return Args()
+        node = self.typedargslist()
         self.eat(RB)
-        return token
+        return node
 
     def funcdef(self):
         # 'def' NAME parameters ['->' test] ':' suite
@@ -714,7 +830,13 @@ class Parser(object):
         name = self.current_token
         self.eat(ID)
         params = self.parameters()
-        pass
+        tp = None
+        if self.current_token.type == OPIN:
+            op = self.eat(OPIN)
+            tp = self.test()
+        self.eat(COLON)
+        stmt = self.suite()
+        return Func(name, params, stmt, tp)
 
     def compound_stmt(self):
         # if_stmt | while_stmt | for_stmt | try_stmt
@@ -768,11 +890,6 @@ if __name__ == '__main__':
         text = f.read()
 
     lex = Lexer(text)
-    # while True:
-    #     token = lex.get_next_token()
-    #     print(token)
-    #     if token.type == ENDMARKER:
-    #         break
     parser = Parser(lex)
     tree = parser.parse()
     print('end')
