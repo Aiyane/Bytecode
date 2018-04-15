@@ -152,7 +152,7 @@ class VisitNode(object):
     def visit_Class(self, root, node):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
-        token = ''.join([node_token, ' [label="Class-', node.name.value, '"]'])
+        token = ''.join([node_token, ' [label="Class ', node.name.value, '"]'])
         self.content += ' '*4 + token + '\n'
         self.content += '    {} -> {}\n'.format(root, node_token)
         if node.parents:
@@ -162,7 +162,7 @@ class VisitNode(object):
     def visit_Func(self, root, node):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
-        token = ''.join([node_token, ' [label="', node.name.value, ' Func"]'])
+        token = ''.join([node_token, ' [label="Func ', node.name.value, '"]'])
         self.content += ' '*4 + token + '\n'
         self.content += '    {} -> {}\n'.format(root, node_token)
 

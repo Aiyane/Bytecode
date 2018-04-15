@@ -348,14 +348,14 @@ class Parser(object):
     def arglist(self):
         # argument (',' argument)*  [',']
         node = self.argument()
-        root = ListObj()
-        root.tokens.append(node)
+        root = Args()
+        root.args.append(node)
         while self.current_token.type == COMMA:
             self.eat(COMMA)
             if self.current_token.type == RB:
-                return root if len(root.tokens) > 1 else node
-            root.tokens.append(self.argument())
-        return node
+                return root if len(root.args) > 1 else node
+            root.args.append(self.argument())
+        return root
 
     def subscriptlist(self):
         # subscript (',' subscript)* [',']
