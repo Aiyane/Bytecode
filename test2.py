@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 # test2.py
 
+a1 = 1 + 3*4-5/4+4 % 5
+b2 = 4 > 5
 
-def main():
-    a1 = 1 + 3*4-5/4+4 % 5
-    b2 = 4 > 5
+
+def main(a1, b2, *args, **keyargs):
     b1 = 2**3
     res = a1 - b1
 

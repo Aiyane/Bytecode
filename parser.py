@@ -754,24 +754,24 @@ class Parser(object):
         if self.current_token.type == MUL:
             self.eat(MUL)
             args = Args()
-            if self.current_token == ID:
-                arg = Arg(self.typdef(), 1)
-                args.tokens.append(arg)
-            while self.current_token == COMMA:
+            if self.current_token.type == ID:
+                arg = Arg(self.tfpdef(), 1)
+                args.args.append(arg)
+            while self.current_token.type == COMMA:
                 self.eat(COMMA)
                 if self.current_token.type == ID:
                     arg = self.tfpdef()
                     if self.current_token.type == ASSIGN:
                         self.eat(ASSIGN)
-                        args.tokens.append(Arg(arg, self.test()))
+                        args.args.append(Arg(arg, self.test()))
                     else:
-                        args.tokens.append(Arg(arg, 0))
+                        args.args.append(Arg(arg, 0))
                 elif self.current_token.type == POWER:
-                    args.tokens.append(self.typedargslist())
+                    args.args.append(self.typedargslist())
                     break
-            if len(args.tokens) == 0:
+            if len(args.args) == 0:
                 return Arg(Token(MUL, '*'))
-            return args if len(args) > 1 else arg
+            return args if len(args.args) > 1 else arg
 
         """
         tfpdef ['=' test] (',' tfpdef ['=' test])*
@@ -795,24 +795,24 @@ class Parser(object):
             arg = Arg(arg, 0)
 
         args = Args()
-        args.token.append(arg)
+        args.args.append(arg)
         if self.current_token.type == COMMA:
             while self.current_token.type == COMMA:
                 self.eat(COMMA)
                 if self.current_token.type == ID:
                     arg = self.tfpdef()
                     if self.current_token.type == ASSIGN:
-                        args.tokens.append(Arg(arg, self.test()))
+                        args.args.append(Arg(arg, self.test()))
                     else:
-                        args.tokens.append(Arg(arg, 0))
+                        args.args.append(Arg(arg, 0))
                 else:
                     arg = self.typedargslist()
-                    if hasattr(arg, 'tokens'):
-                        args.tokens.extend(arg.tokens)
+                    if hasattr(arg, 'args'):
+                        args.args.extend(arg.args)
                     else:
-                        args.tokens.append(arg)
+                        args.args.append(arg)
                     break
-        return args if len(args.tokens) > 1 else arg
+        return args if len(args.args) > 1 else arg
 
     def parameters(self):
         # '(' [typedargslist] ')'

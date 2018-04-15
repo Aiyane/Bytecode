@@ -138,9 +138,9 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         if node.default == 1:
-            token = ''.join([node_token, ' [label="*"]'])
+            token = ''.join([node_token, ' [label="*', node.name.value, '"]'])
         elif node.default == 2:
-            token = ''.join([node_token, ' [label="**"]'])
+            token = ''.join([node_token, ' [label="**', node.name.value, '"]'])
         else:
             token = ''.join([node_token, ' [label="', node.name.value, '"]'])
         self.content += ' '*4 + token + '\n'
