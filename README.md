@@ -1,0 +1,7 @@
+本项目用python实现了python语言的编译器前端
+lexer.py实现了python的词法分析
+parser.py实现了python的语法分析
+dot.py是语法树的可视化程序
+test*是测试代码段
+
+另外: pyvm2.py文件是500lines书中python解释器的代码
