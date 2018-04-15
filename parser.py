@@ -67,6 +67,13 @@ class WhileExpr(AST):
         self.other = None
 
 
+class Class(AST):
+    def __init__(self, name, parents, stmt):
+        self.name = name
+        self.parents = parents
+        self.stmt = stmt
+
+
 class IfExpr(AST):
     def __init__(self):
         self.tokens = []
@@ -273,8 +280,82 @@ class Parser(object):
         else:
             return UnaryOp(op, self.testlist())
 
+    def test_nocond(self):
+        # or_test | lambdef_nocond
+        if self.current_token.type == LAMBDA:
+            pass
+        return self.or_test()
+
+    def comp_if(self):
+        # 'if' test_nocond [comp_iter]
+        self.eat(IF)
+        root = IfItem(self.test_nocond(), 0)
+        if self.current_token.type in (IF, FOR, ASYNC):
+            res = ListObj()
+            res.tokens.append(root)
+            res.tokens.append(self.comp_iter())
+            return res
+        return root
+
+    def comp_iter(self):
+        # comp_for | comp_if
+        if self.current_token.type == IF:
+            return self.comp_if()
+        return self.comp_for()
+
+    def comp_for(self):
+        # [ASYNC] 'for' exprlist 'in' or_test [comp_iter]
+        async_expr = None
+        if self.current_token.type == ASYNC:
+            self.eat(ASYNC)
+            async_expr = True
+        self.eat(FOR)
+        _exprlist = self.exprlist()
+        self.eat(IN)
+        _testlist = self.or_test()
+        root = ForExpr(_exprlist, _testlist, 0)
+        if self.current_token.type in (IF, FOR, ASYNC):
+            res = ListObj()
+            res.tokens.append(root)
+            res.tokens.append(self.comp_iter())
+            if async_expr:
+                return UnaryOp(Token(ASYNC, ASYNC), res)
+            return res
+        if async_expr:
+            return UnaryOp(Token(ASYNC, ASYNC), root)
+        return root
+
+    def argument(self):
+        # ( test [comp_for] |
+        #     test '=' test |
+        #         '**' test |
+        #          '*' test )
+        if self.current_token.type == MUL:
+            self.eat(MUL)
+            return Arg(self.test(), 1)
+        if self.current_token.type == POWER:
+            self.eat(POWER)
+            return Arg(self.test(), 2)
+        name = self.test()
+        if self.current_token.type == ASSIGN:
+            self.eat(ASSIGN)
+            return Arg(name, self.test())
+        if self.current_token.type in (FOR, IF, ASYNC):
+            comp = self.comp_for()
+            return BinOp(name, Token(FOR, FOR), comp)
+        return name
+
     def arglist(self):
-        pass
+        # argument (',' argument)*  [',']
+        node = self.argument()
+        root = ListObj()
+        root.tokens.append(node)
+        while self.current_token.type == COMMA:
+            self.eat(COMMA)
+            if self.current_token.type == RB:
+                return root if len(root.tokens) > 1 else node
+            root.tokens.append(self.argument())
+        return node
 
     def subscriptlist(self):
         # subscript (',' subscript)* [',']
@@ -838,6 +919,19 @@ class Parser(object):
         stmt = self.suite()
         return Func(name, params, stmt, tp)
 
+    def classdef(self):
+        # classdef: 'class' NAME ['(' [arglist] ')'] ':' suite
+        self.eat(CLASS)
+        name = self.current_token
+        self.eat(ID)
+        args = None
+        if self.current_token.type == LB:
+            self.eat(LB)
+            args = self.arglist()
+            self.eat(RB)
+        self.eat(COLON)
+        return Class(name, args, self.suite())
+
     def compound_stmt(self):
         # if_stmt | while_stmt | for_stmt | try_stmt
         # | with_stmt | funcdef | classdef | decorated | async_stmt
@@ -849,6 +943,8 @@ class Parser(object):
             return self.for_stmt()
         if self.current_token.type == DEF:
             return self.funcdef()
+        if self.current_token.type == CLASS:
+            return self.classdef()
         pass
 
     def stmt(self):
