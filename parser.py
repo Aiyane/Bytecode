@@ -129,6 +129,19 @@ class Parser(object):
     def __init__(self, lexer):
         self.lexer = lexer
         self.current_token = lexer.get_next_token()
+        self.STMTS = {
+            # if_stmt | while_stmt | for_stmt | try_stmt
+            # | with_stmt | funcdef | classdef | decorated | async_stmt
+            IF: self.if_stmt,
+            WHILE: self.while_stmt,
+            FOR: self.for_stmt,
+            TRY: self.try_stmt,
+            WITH: self.with_stmt,
+            DEF: self.funcdef,
+            CLASS: self.classdef,
+            DEC: self.decorated,
+            ASYNC: self.async_stmt,
+        }
 
     def error(self):
         raise SynError('Invalid syntax')
@@ -932,20 +945,22 @@ class Parser(object):
         self.eat(COLON)
         return Class(name, args, self.suite())
 
+    def try_stmt(self):
+        pass
+
+    def with_stmt(self):
+        pass
+
+    def decorated(self):
+        pass
+
+    def async_stmt(self):
+        pass
+
     def compound_stmt(self):
         # if_stmt | while_stmt | for_stmt | try_stmt
         # | with_stmt | funcdef | classdef | decorated | async_stmt
-        if self.current_token.type == IF:
-            return self.if_stmt()
-        if self.current_token.type == WHILE:
-            return self.while_stmt()
-        if self.current_token.type == FOR:
-            return self.for_stmt()
-        if self.current_token.type == DEF:
-            return self.funcdef()
-        if self.current_token.type == CLASS:
-            return self.classdef()
-        pass
+        return self.STMTS[self.current_token.type]()
 
     def stmt(self):
         # simple_stmt | compound_stmt
