@@ -36,6 +36,16 @@ BINARY_OPERATORS = {
 }
 
 
+def real_str(token):
+    if not isinstance(token, Token):
+        raise TypeError("参数必须为token类!")
+    head = token.value[0]
+    for i, ch in enumerate(token.value):
+        if ch != head:
+            token.value = token.value[i:-i]
+            return token
+
+
 class AST(object):
     pass
 
@@ -263,6 +273,8 @@ class Parser(object):
         if self.current_token.type in (INT, INUM, FLOAT, OINT, BINT, XINT, ID, NONE, TRUE, FALSE, STR, BSTR):
             token = self.current_token
             self.eat(token.type)
+            if token.type == STR:
+                return real_str(token)
             return token
         if self.current_token.type == DOT:
             self.eat(DOT)

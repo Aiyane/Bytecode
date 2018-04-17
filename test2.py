@@ -27,3 +27,6 @@ class Test(object):
         else:
             c1 = 3
         return c1
+
+
+print("hello")
