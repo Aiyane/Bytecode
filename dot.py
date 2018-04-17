@@ -176,6 +176,16 @@ class VisitNode(object):
             self.content += '    {} -> {}\n'.format(node_token, node_token2)
             self.visit(node_token2, node.ret)
 
+    def visit_WithExpr(self, root, node):
+        self.num += 1
+        node_token = ''.join(['node', str(self.num)])
+        token = ''.join([node_token, ' [label="WithExpr"]'])
+        self.content += ' '*4 + token + '\n'
+        self.content += '    {} -> {}\n'.format(root, node_token)
+
+        self.visit(node_token, node.token)
+        self.visit(node_token, node.stmt)
+
     def visit(self, root, node):
         method_name = 'visit_' + type(node).__name__
         visitor = getattr(self, method_name, self.generic_visit)

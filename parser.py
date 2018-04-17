@@ -67,6 +67,12 @@ class WhileExpr(AST):
         self.other = None
 
 
+class WithExpr(AST):
+    def __init__(self, token, stmt):
+        self.token = token
+        self.stmt = stmt
+
+
 class Class(AST):
     def __init__(self, name, parents, stmt):
         self.name = name
@@ -948,8 +954,25 @@ class Parser(object):
     def try_stmt(self):
         pass
 
+    def with_item(self):
+        # test ['as' expr]
+        node = self.test()
+        if self.current_token.type == AS:
+            self.eat(AS)
+            return BinOp(node, Token(AS, AS), self.expr())
+        return node
+
     def with_stmt(self):
-        pass
+        # 'with' with_item (',' with_item)*  ':' suite
+        self.eat(WITH)
+        node = self.with_item()
+        root = ListObj()
+        root.tokens.append(node)
+        while self.current_token.type == COMMA:
+            self.eat(COMMA)
+            root.tokens.append(self.with_item())
+        self.eat(COLON)
+        return WithExpr(root, self.suite()) if len(root.tokens) > 1 else WithExpr(node, self.suite())
 
     def decorated(self):
         pass
