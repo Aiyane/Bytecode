@@ -181,16 +181,14 @@ class Lexer(object):
         peek_pos = self.pos + 1
         if peek_pos > len(self.text) - 1:
             return None
-        else:
-            return self.text[peek_pos]
+        return self.text[peek_pos]
 
     def peekn(self, n):
         # 向前取n个字符
         peek_pos = self.pos + n
         if 0 == n or peek_pos > len(self.text) - 1:
             return None
-        else:
-            return self.text[self.pos+1:peek_pos+1]
+        return self.text[self.pos+1:peek_pos+1]
 
     def skip_whitespace(self):
         # 跳过空白字符
@@ -245,7 +243,7 @@ class Lexer(object):
             self.advance()
 
             while True:
-                if self.current_char == None:
+                if self.current_char is None:
                     self.error()
 
                 if self.current_char == quote:
@@ -273,7 +271,7 @@ class Lexer(object):
         result = quote*3
 
         while True:
-            if self.current_char == None:
+            if self.current_char is None:
                 self.error()
             if self.current_char == quote and self.peekn(2) == quote*2:
                 break
@@ -390,7 +388,7 @@ class Lexer(object):
             self.advance()
 
             while True:
-                if self.current_char == None:
+                if self.current_char is None:
                     self.error()
 
                 if self.current_char == quote:
@@ -418,7 +416,7 @@ class Lexer(object):
         result = quote*3
 
         while True:
-            if self.current_char == None:
+            if self.current_char is None:
                 self.error()
             if self.current_char == quote and self.peekn(2) == quote*2:
                 break

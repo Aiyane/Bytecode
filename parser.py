@@ -1,8 +1,9 @@
 #!/usr/bin/env/python3
 # -*- coding: utf-8 -*-
 # pasrer.py
-from lexer import *
 import operator
+
+from lexer import *
 
 BINARY_OPERATORS = {
     POWER: operator.pow,
@@ -176,9 +177,10 @@ class Parser(object):
             # node = BinOp(node, self.comp_op(), self.expr())
             op = self.comp_op()
             node2 = self.expr()
-            if isinstance(node.value, (int, complex, float)) and isinstance(node2.value, (int, complex, float)):
-                node.value = BINARY_OPERATORS[op.value](
-                    node.value, node2.value)
+            if isinstance(node.value, (int, complex, float)) and isinstance(
+                    node2.value, (int, complex, float)):
+                node.value = BINARY_OPERATORS[op.value](node.value,
+                                                        node2.value)
             # if op.type == COMP_OP:
             #     try:
             #         node.value = BINARY_OPERATORS[op.value](
@@ -247,7 +249,8 @@ class Parser(object):
 
     def testlist_comp(self):
         # (test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )
-        node = self.star_expr() if self.current_token.type == MUL else self.test()
+        node = self.star_expr(
+        ) if self.current_token.type == MUL else self.test()
         root = ListObj()
         if self.current_token.type in (ASYNC, FOR):
             pass
@@ -256,8 +259,8 @@ class Parser(object):
         while self.current_token.type == COMMA:
             self.eat(COMMA)
             try:
-                root.tokens.append(self.star_expr()
-                                   if self.current_token == MUL else self.test())
+                root.tokens.append(self.star_expr() if self.current_token ==
+                                   MUL else self.test())
             except SynError:
                 break
         return root if len(root.tokens) > 1 else node
@@ -270,7 +273,8 @@ class Parser(object):
         #    '[' [testlist_comp] ']' |
         #    '{' [dictorsetmaker] '}' |
         #    NAME | NUMBER | STRING+ | '...' | 'None' | 'True' | 'False')
-        if self.current_token.type in (INT, INUM, FLOAT, OINT, BINT, XINT, ID, NONE, TRUE, FALSE, STR, BSTR):
+        if self.current_token.type in (INT, INUM, FLOAT, OINT, BINT, XINT, ID,
+                                       NONE, TRUE, FALSE, STR, BSTR):
             token = self.current_token
             self.eat(token.type)
             if token.type == STR:
@@ -292,7 +296,8 @@ class Parser(object):
             op = self.current_token
             op.value = '()'
             self.eat(LB)
-            token = self.yield_expr() if self.current_token.type == YIELD else self.testlist_comp()
+            token = self.yield_expr(
+            ) if self.current_token.type == YIELD else self.testlist_comp()
             self.eat(RB)
             return UnaryOp(op, token)
 
@@ -408,8 +413,9 @@ class Parser(object):
 
     def subscript(self):
         # test | [test] ':' [test] [sliceop]
-        test_head = (LAMBDA, NOT, ADD, SUB, OPPO, LB, LCB, LSB, AWAIT, INT, INUM, FLOAT,
-                     OINT, BINT, XINT, ID, DOT, NONE, TRUE, FALSE, STR, BSTR)
+        test_head = (LAMBDA, NOT, ADD, SUB, OPPO, LB, LCB, LSB, AWAIT, INT,
+                     INUM, FLOAT, OINT, BINT, XINT, ID, DOT, NONE, TRUE, FALSE,
+                     STR, BSTR)
         node = None
         if self.current_token.type in test_head:
             node = self.test()
@@ -718,7 +724,7 @@ class Parser(object):
         pass
 
     def small_stmt(self):
-        #(expr_stmt | del_stmt | pass_stmt | flow_stmt |
+        # (expr_stmt | del_stmt | pass_stmt | flow_stmt |
         #  import_stmt | global_stmt | nonlocal_stmt | assert_stmt)
         cur_token = self.current_token
         if cur_token.value == 'del':
@@ -884,7 +890,6 @@ class Parser(object):
             if len(args.args) == 0:
                 return Arg(Token(MUL, '*'))
             return args if len(args.args) > 1 else arg
-
         """
         tfpdef ['=' test] (',' tfpdef ['=' test])*
         [
@@ -964,6 +969,27 @@ class Parser(object):
         return Class(name, args, self.suite())
 
     def try_stmt(self):
+        # ('try' ':' suite
+        #  ((except_clause ':' suite)+
+        #   ['else' ':' suite]
+        #   ['finally' ':' suite] |
+        #   'finally' ':' suite))
+        if self.current_token.type == TRY:
+            self.eat(TRY)
+            self.eat(COLON)
+            node = self.suite()
+            if self.current_token.type == FINALLY:
+                self.eat(FINALLY)
+                self.eat(COLON)
+                node = self.suite()
+            if self.current_token.type == EXCEPT:
+                self.eat(EXCEPT)
+                self.eat(COLON)
+                node = self.suite()
+                if self.current_token.type == FINALLY:
+                    self.eat(FINALLY)
+                    self.eat(COLON)
+
         pass
 
     def with_item(self):
@@ -984,7 +1010,9 @@ class Parser(object):
             self.eat(COMMA)
             root.tokens.append(self.with_item())
         self.eat(COLON)
-        return WithExpr(root, self.suite()) if len(root.tokens) > 1 else WithExpr(node, self.suite())
+        return WithExpr(root,
+                        self.suite()) if len(root.tokens) > 1 else WithExpr(
+                            node, self.suite())
 
     def decorated(self):
         pass
@@ -999,7 +1027,8 @@ class Parser(object):
 
     def stmt(self):
         # simple_stmt | compound_stmt
-        if self.current_token.type in (IF, WHILE, FOR, TRY, WITH, DEF, CLASS, DEC, ASYNC):
+        if self.current_token.type in (IF, WHILE, FOR, TRY, WITH, DEF, CLASS,
+                                       DEC, ASYNC):
             return self.compound_stmt()
         return self.simple_stmt()
 
@@ -1021,6 +1050,9 @@ class Parser(object):
 
     def single_input(self):
         # NEWLINE | simple_stmt | compound_stmt NEWLINE
+        if self.current_token.type == NEWLINE:
+            self.eat(NEWLINE)
+
         pass
 
     def parse(self):
@@ -1032,7 +1064,9 @@ class Parser(object):
 
 
 if __name__ == '__main__':
-    with open('/home/aiyane/code/python/Bytecode/test2.py', "r", encoding="utf8") as f:
+    with open(
+            '/home/aiyane/code/python/Bytecode/test2.py', "r",
+            encoding="utf8") as f:
         text = f.read()
 
     lex = Lexer(text)
