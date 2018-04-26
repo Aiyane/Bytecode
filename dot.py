@@ -186,6 +186,26 @@ class VisitNode(object):
         self.visit(node_token, node.token)
         self.visit(node_token, node.stmt)
 
+    def visit_TryExpr(self, root, node):
+        self.num += 1
+        node_token = ''.join(['node', str(self.num)])
+        token = ''.join([node_token, ' [label="TryExpr"]'])
+        self.content += ' '*4 + token + '\n'
+        self.content += '    {} -> {}\n'.format(root, node_token)
+
+        self.visit(node_token, node.condition)
+        self.visit(node_token, node.stmt)
+
+        if node.other:
+            self.visit(node_token, node.other)
+        else:
+            self.content += '    {} -> "None"\n'.format(node_token)
+
+        if node.fin:
+            self.visit(node_token, node.fin)
+        else:
+            self.content += '    {} -> "None"\n'.format(node_token)
+
     def visit(self, root, node):
         method_name = 'visit_' + type(node).__name__
         visitor = getattr(self, method_name, self.generic_visit)
