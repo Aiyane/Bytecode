@@ -3,7 +3,14 @@
 # pasrer.py
 import operator
 
-from lexer import *
+from lexer import (
+    Lexer, Token, LB, RB, LCB, RCB, LSB, RSB, ASSIGN, COLON, CEMI, COMMA, DOT,
+    ADD, SUB, MUL, ET, SHU, OPPO, DIF, OPIN, POWER, AUGASSIGN, DEC, DIV,
+    REAL_DIV, YU, COMP_OP, LL, RR, INT, OINT, BINT, XINT, FLOAT, INUM,
+    ID, STR, BSTR, NEWLINE, INDENT, DEDENT, ENDMARKER, IS, CONTINUE, BREAK,
+    WHILE, FOR, RET, IF, ELIF, ELSE, DEF, NOT, OR, AND, TRUE, FALSE, NONE,
+    CLASS, FINALLY, LAMBDA, TRY, FROM, NONLOCAL, GLOBAL, WITH, AS, YIELD,
+    ASSERT, IMPORT, PASS_STMT, EXCEPT, IN, RAISE, AWAIT, ASYNC,)
 
 BINARY_OPERATORS = {
     POWER: operator.pow,
@@ -321,8 +328,7 @@ class Parser(object):
         self.eat(RET)
         if self.current_token.type in (NEWLINE, DEDENT):
             return op
-        else:
-            return UnaryOp(op, self.testlist())
+        return UnaryOp(op, self.testlist())
 
     def test_nocond(self):
         # or_test | lambdef_nocond
@@ -639,16 +645,12 @@ class Parser(object):
             return Token(IN, 'in')
 
         if self.current_token.type == NOT:
-            _not = self.current_token
             self.eat(NOT)
-            _in = self.current_token
             self.eat(IN)
             return Token('NOTIN', 'not in')
 
-        _is = self.current_token
         self.eat(IS)
         if self.current_token.type == NOT:
-            _not = self.current_token
             self.eat(NOT)
             return Token(COMP_OP, 'is not')
         return Token(COMP_OP, 'is')
@@ -957,7 +959,6 @@ class Parser(object):
         params = self.parameters()
         tp = None
         if self.current_token.type == OPIN:
-            op = self.eat(OPIN)
             tp = self.test()
         self.eat(COLON)
         stmt = self.suite()
