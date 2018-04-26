@@ -77,6 +77,12 @@ class WhileExpr(AST):
         self.stmt = stmt
         self.other = None
 
+class TryExpr(AST):
+    def __init__(self, condition, stmt, fin=None):
+        self.condition = condition
+        self.stmt = stmt
+        self.fin = fin
+
 
 class WithExpr(AST):
     def __init__(self, token, stmt):
@@ -981,14 +987,26 @@ class Parser(object):
             if self.current_token.type == FINALLY:
                 self.eat(FINALLY)
                 self.eat(COLON)
-                node = self.suite()
-            if self.current_token.type == EXCEPT:
+                other = self.suite()
+                return TryExpr(node, None, other)
+
+            nodes = ListObj()
+            while self.current_token.type == EXCEPT:
                 self.eat(EXCEPT)
                 self.eat(COLON)
-                node = self.suite()
+                stmt = self.suite()
+                nodes.tokens.append(stmt)
+                if self.current_token.type == ELSE:
+                    self.eat(ELSE)
+                    self.eat(COLON)
+                    suite = self.suite()
                 if self.current_token.type == FINALLY:
                     self.eat(FINALLY)
                     self.eat(COLON)
+                    other = self.suite()
+                    return TryExpr(node, stmt, other) if len(nodes.tokens) < 2 else TryExpr(node, nodes, other)
+                elif self.current_token.type != EXCEPT:
+                    return TryExpr(node, stmt) if len(nodes.tokens) < 2 else TryExpr(node, nodes, other)
 
         pass
 
