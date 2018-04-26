@@ -953,6 +953,8 @@ class Lexer(object):
                 if self.current_char == '#':
                     self.advance()
                     self.skip_comment()
+                    if not self.current_char.isspace():
+                        return Token(NEWLINE, tab)
                     continue
                 if (tab - self.tab) // 4 > 0:
                     self.tab = tab

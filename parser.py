@@ -86,11 +86,17 @@ class WhileExpr(AST):
 
 
 class TryExpr(AST):
-    def __init__(self, condition, stmt, fin=None, other=None):
+    def __init__(self, condition, ex_expr, fin=None, other=None):
         self.condition = condition
-        self.stmt = stmt
+        self.stmt = ex_expr
         self.other = other
         self.fin = fin
+
+
+class ExceptExpr(AST):
+    def __init__(self, condition, value):
+        self.condition = condition
+        self.value = value
 
 
 class WithExpr(AST):
@@ -760,7 +766,8 @@ class Parser(object):
         root.tokens.append(node)
         while self.current_token.type == CEMI:
             self.eat(CEMI)
-            root.tokens.append(self.small_stmt())
+            if self.current_token.type != NEWLINE:
+                root.tokens.append(self.small_stmt())
         self.eat(NEWLINE)
         return root if len(root.tokens) > 1 else node
 
@@ -977,6 +984,19 @@ class Parser(object):
         self.eat(COLON)
         return Class(name, args, self.suite())
 
+    def except_clause(self):
+        #  'except' [test ['as' NAME]]
+        self.eat(EXCEPT)
+        try:
+            node = self.test()
+            if self.current_token.type == AS:
+                self.eat(AS)
+                name = self.current_token
+                return BinOp(node, Token(AS, AS), name)
+            return node
+        except SynError:
+            pass
+
     def try_stmt(self):
         # ('try' ':' suite
         #  ((except_clause ':' suite)+
@@ -995,9 +1015,9 @@ class Parser(object):
 
             nodes = ListObj()
             while self.current_token.type == EXCEPT:
-                self.eat(EXCEPT)
+                except_clause = self.except_clause()
                 self.eat(COLON)
-                stmt = self.suite()
+                stmt = ExceptExpr(except_clause, self.suite())
                 nodes.tokens.append(stmt)
                 if self.current_token.type == ELSE:
                     self.eat(ELSE)
@@ -1008,12 +1028,11 @@ class Parser(object):
                             node, stmt, None, suite) if len(
                             nodes.tokens) < 2 else TryExpr(
                             node, nodes, None, suite)
-                    else:
-                        self.eat(FINALLY)
-                        self.eat(COLON)
-                        return TryExpr(node, stmt, self.suite(), suite) if len(
-                            nodes.tokens) < 2 else TryExpr(
-                            node, nodes, self.suite(), suite)
+                    self.eat(FINALLY)
+                    self.eat(COLON)
+                    return TryExpr(node, stmt, self.suite(), suite) if len(
+                        nodes.tokens) < 2 else TryExpr(
+                        node, nodes, self.suite(), suite)
                 if self.current_token.type == FINALLY:
                     self.eat(FINALLY)
                     self.eat(COLON)
@@ -1099,7 +1118,7 @@ class Parser(object):
         return node
 
 
-if __name__ == '__main__':
+def main():
     with open(
             '/home/aiyane/code/python/Bytecode/test2.py', "r",
             encoding="utf8") as f:
@@ -1107,5 +1126,10 @@ if __name__ == '__main__':
 
     lex = Lexer(text)
     parser = Parser(lex)
-    tree = parser.parse()
-    print('end')
+    return parser.parse()
+
+
+if __name__ == '__main__':
+    import ipdb
+    tree = main()
+    ipdb.set_trace()

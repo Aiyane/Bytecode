@@ -3,6 +3,7 @@
 # dot.py
 from parser import Parser
 from lexer import Lexer
+import debug
 
 
 class VisitNode(object):
@@ -28,7 +29,7 @@ class VisitNode(object):
         node_token = ''.join(['node', str(self.num)])
         root2 = ''.join(
             [node_token, ' [label="', str(node.op.value), ' BinOp"]'])
-        self.content += ' '*4+root2 + '\n'
+        self.content += ' ' * 4 + root2 + '\n'
         self.content += "    {} -> {}\n".format(root, node_token)
         if node.left is not None:
             self.visit(node_token, node.left)
@@ -41,7 +42,7 @@ class VisitNode(object):
         node_token = ''.join(['node', str(self.num)])
         root = ''.join(
             [node_token, ' [label="', str(node.op.value), ' UnaryOp"]'])
-        self.content += ' '*4+root + '\n'
+        self.content += ' ' * 4 + root + '\n'
         self.content += "    {} -> {}\n".format(root0, node_token)
 
         if node.token:
@@ -51,7 +52,7 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         token = ''.join([node_token, ' [label="List"]'])
-        self.content += ' '*4 + token + '\n'
+        self.content += ' ' * 4 + token + '\n'
         self.content += '    {} -> {}\n'.format(root, node_token)
         for token in node.tokens:
             self.visit(node_token, token)
@@ -60,14 +61,14 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         token = ''.join([node_token, ' [label="', str(node.value), '"]'])
-        self.content += ' '*4 + token + '\n'
+        self.content += ' ' * 4 + token + '\n'
         self.content += "    {} -> {}\n".format(root, node_token)
 
     def visit_IfExpr(self, root, node):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         token = ''.join([node_token, ' [label="IfExpr"]'])
-        self.content += ' '*4+token + '\n'
+        self.content += ' ' * 4 + token + '\n'
         self.content += '    {} -> {}\n'.format(root, node_token)
         for item in node.tokens:
             self.visit(node_token, item)
@@ -77,12 +78,12 @@ class VisitNode(object):
         node_token = ''.join(['node', str(self.num)])
         if node.condition is not None:
             token = ''.join([node_token, ' [label="IfItem"]'])
-            self.content += ' '*4 + token + '\n'
+            self.content += ' ' * 4 + token + '\n'
             self.content += '    {} -> {}\n'.format(root, node_token)
             self.visit(node_token, node.condition)
         else:
             token = ''.join([node_token, ' [label="Else"]'])
-            self.content += ' '*4 + token + '\n'
+            self.content += ' ' * 4 + token + '\n'
             self.content += '    {} -> {}\n'.format(root, node_token)
         self.visit(node_token, node.stmt)
 
@@ -90,7 +91,7 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         token = ''.join([node_token, '[label="WhileExpr"]'])
-        self.content += ' '*4 + token + '\n'
+        self.content += ' ' * 4 + token + '\n'
         self.content += '    {} -> {}\n'.format(root, node_token)
 
         self.visit(node_token, node.condition)
@@ -102,7 +103,7 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         token = ''.join([node_token, '[label="ForExpr"]'])
-        self.content += ' '*4 + token + '\n'
+        self.content += ' ' * 4 + token + '\n'
         self.content += '    {} -> {}\n'.format(root, node_token)
 
         self.visit(node_token, node.exprlist)
@@ -115,7 +116,7 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         token = ''.join([node_token, ' [label="', node.op.value, ' ThreeOp"]'])
-        self.content += ' '*4 + token + '\n'
+        self.content += ' ' * 4 + token + '\n'
         self.content += "    {} -> {}\n".format(root, node_token)
 
         if node.left is not None:
@@ -129,7 +130,7 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         token = ''.join([node_token, ' [label="Args"]'])
-        self.content += ' '*4 + token + '\n'
+        self.content += ' ' * 4 + token + '\n'
         self.content += '    {} -> {}\n'.format(root, node_token)
         for token in node.args:
             self.visit(node_token, token)
@@ -143,7 +144,7 @@ class VisitNode(object):
             token = ''.join([node_token, ' [label="**', node.name.value, '"]'])
         else:
             token = ''.join([node_token, ' [label="', node.name.value, '"]'])
-        self.content += ' '*4 + token + '\n'
+        self.content += ' ' * 4 + token + '\n'
         self.content += '    {} -> {}'.format(root, node_token)
 
         if not isinstance(node.default, int):
@@ -153,7 +154,7 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         token = ''.join([node_token, ' [label="Class ', node.name.value, '"]'])
-        self.content += ' '*4 + token + '\n'
+        self.content += ' ' * 4 + token + '\n'
         self.content += '    {} -> {}\n'.format(root, node_token)
         if node.parents:
             self.visit(node_token, node.parents)
@@ -163,7 +164,7 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         token = ''.join([node_token, ' [label="Func ', node.name.value, '"]'])
-        self.content += ' '*4 + token + '\n'
+        self.content += ' ' * 4 + token + '\n'
         self.content += '    {} -> {}\n'.format(root, node_token)
 
         self.visit(node_token, node.params)
@@ -172,7 +173,7 @@ class VisitNode(object):
             self += 1
             node_token2 = ''.join(['node' + str(self.num)])
             token = ''.join([node_token2, ' [label="need ret"]'])
-            self.content += ' '*4 + token + '\n'
+            self.content += ' ' * 4 + token + '\n'
             self.content += '    {} -> {}\n'.format(node_token, node_token2)
             self.visit(node_token2, node.ret)
 
@@ -180,7 +181,7 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         token = ''.join([node_token, ' [label="WithExpr"]'])
-        self.content += ' '*4 + token + '\n'
+        self.content += ' ' * 4 + token + '\n'
         self.content += '    {} -> {}\n'.format(root, node_token)
 
         self.visit(node_token, node.token)
@@ -190,7 +191,7 @@ class VisitNode(object):
         self.num += 1
         node_token = ''.join(['node', str(self.num)])
         token = ''.join([node_token, ' [label="TryExpr"]'])
-        self.content += ' '*4 + token + '\n'
+        self.content += ' ' * 4 + token + '\n'
         self.content += '    {} -> {}\n'.format(root, node_token)
 
         self.visit(node_token, node.condition)
