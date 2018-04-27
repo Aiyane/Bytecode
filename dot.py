@@ -3,7 +3,10 @@
 # dot.py
 from parser import Parser
 from lexer import Lexer
-import debug
+try:
+    import debug
+except ImportError:
+    pass
 
 
 class VisitNode(object):
@@ -200,12 +203,24 @@ class VisitNode(object):
         if node.other:
             self.visit(node_token, node.other)
         else:
-            self.content += '    {} -> "None"\n'.format(node_token)
-
+            self.num += 1
+            self.content += ' '*4 + 'node' + str(self.num) + ' [label="None"]\n'
+            self.content += '    {} -> node{}\n'.format(node_token, str(self.num))
         if node.fin:
             self.visit(node_token, node.fin)
         else:
-            self.content += '    {} -> "None"\n'.format(node_token)
+            self.num += 1
+            self.content += ' '*4 + 'node' + str(self.num) + ' [label="None"]\n'
+            self.content += '    {} -> node{}\n'.format(node_token, str(self.num))
+
+    def visit_ExceptExpr(self, root, node):
+        self.num += 1
+        node_token = ''.join(['node', str(self.num)])
+        token = ''.join([node_token, ' [label="ExceptExpr"]'])
+        self.content += ' ' * 4 + token + '\n'
+        self.content += '    {} -> {}\n'.format(root, node_token)
+        self.visit(node_token, node.condition)
+        self.visit(node_token, node.value)
 
     def visit(self, root, node):
         method_name = 'visit_' + type(node).__name__
@@ -216,7 +231,7 @@ class VisitNode(object):
         raise Exception('No visit_{} method'.format(type(node).__name__))
 
 
-if __name__ == '__main__':
+def main():
     with open('/home/aiyane/code/python/Bytecode/test2.py', "r", encoding="utf8") as f:
         text = f.read()
 
@@ -227,4 +242,11 @@ if __name__ == '__main__':
 
     with open('res.dot', 'w', encoding="utf8") as f:
         f.write(res)
+    return res
+
+
+if __name__ == '__main__':
+    import ipdb
+    res = main()
+    ipdb.set_trace()
     # dot res.dot -T png -o out.png
