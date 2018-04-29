@@ -1072,8 +1072,34 @@ class Parser(object):
     def decorated(self):
         pass
 
+    def dotted_name(self):
+        #  dotted_name: NAME ('.' NAME)*
+        node = self.current_token
+        self.eat(ID)
+        while self.current_token.type == DOT:
+            self.eat(DOT)
+            node = BinOp(node, Token(DOT, DOT), self.current_token)
+            self.eat(ID)
+        return node
+
+    def decorater(self):
+        # '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
+        self.eat(DEC)
+        name = self.dotted_name()
+        if self.current_token.type == LB:
+            self.eat(LB)
+            pass
+
     def async_stmt(self):
-        pass
+        # ASYNC (funcdef | with_stmt | for_stmt)
+        self.eat(ASYNC)
+        if self.current_token.type == DEF:
+            node = self.funcdef()
+        elif self.current_token.type == WITH:
+            node = self.with_stmt()
+        else:
+            node = self.for_stmt()
+        return UnaryOp(Token(ASYNC, ASYNC), node)
 
     def compound_stmt(self):
         # if_stmt | while_stmt | for_stmt | try_stmt
@@ -1130,6 +1156,6 @@ def main():
 
 
 if __name__ == '__main__':
-    import ipdb
     tree = main()
-    ipdb.set_trace()
+    import ipdb
+    ipdb.set_trace()  # XXX BREAKPOINT, n下一行, s进入函数, a打印当前函数参数, r运行
