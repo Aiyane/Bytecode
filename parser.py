@@ -4,13 +4,84 @@
 import operator
 
 from lexer import (
-    Lexer, Token, LB, RB, LCB, RCB, LSB, RSB, ASSIGN, COLON, CEMI, COMMA, DOT,
-    ADD, SUB, MUL, ET, SHU, OPPO, DIF, OPIN, POWER, AUGASSIGN, DEC, DIV,
-    REAL_DIV, YU, COMP_OP, LL, RR, INT, OINT, BINT, XINT, FLOAT, INUM,
-    ID, STR, BSTR, NEWLINE, INDENT, DEDENT, ENDMARKER, IS, CONTINUE, BREAK,
-    WHILE, FOR, RET, IF, ELIF, ELSE, DEF, NOT, OR, AND, TRUE, FALSE, NONE,
-    CLASS, FINALLY, LAMBDA, TRY, FROM, NONLOCAL, GLOBAL, WITH, AS, YIELD,
-    ASSERT, IMPORT, PASS_STMT, EXCEPT, IN, RAISE, AWAIT, ASYNC,)
+    Lexer,
+    Token,
+    LB,
+    RB,
+    LCB,
+    RCB,
+    LSB,
+    RSB,
+    ASSIGN,
+    COLON,
+    CEMI,
+    COMMA,
+    DOT,
+    ADD,
+    SUB,
+    MUL,
+    ET,
+    SHU,
+    OPPO,
+    DIF,
+    OPIN,
+    POWER,
+    AUGASSIGN,
+    DEC,
+    DIV,
+    REAL_DIV,
+    YU,
+    COMP_OP,
+    LL,
+    RR,
+    INT,
+    OINT,
+    BINT,
+    XINT,
+    FLOAT,
+    INUM,
+    ID,
+    STR,
+    BSTR,
+    NEWLINE,
+    INDENT,
+    DEDENT,
+    ENDMARKER,
+    IS,
+    CONTINUE,
+    BREAK,
+    WHILE,
+    FOR,
+    RET,
+    IF,
+    ELIF,
+    ELSE,
+    DEF,
+    NOT,
+    OR,
+    AND,
+    TRUE,
+    FALSE,
+    NONE,
+    CLASS,
+    FINALLY,
+    LAMBDA,
+    TRY,
+    FROM,
+    NONLOCAL,
+    GLOBAL,
+    WITH,
+    AS,
+    YIELD,
+    ASSERT,
+    IMPORT,
+    PASS_STMT,
+    EXCEPT,
+    IN,
+    RAISE,
+    AWAIT,
+    ASYNC,
+)
 
 BINARY_OPERATORS = {
     POWER: operator.pow,
@@ -249,7 +320,7 @@ class Parser(object):
         name = self.current_token
         self.eat(name.type)
         if self.current_token.type == COLON:
-            self.(COLON)
+            self.eat(COLON)
             node = self.test()
             return BinOp(name, Token(COLON, COLON), node)
         return name
@@ -1061,27 +1132,27 @@ class Parser(object):
                     suite = self.suite()
                     if self.current_token.type != FINALLY:
                         return TryExpr(
-                            node, stmt, None, suite) if len(
-                            nodes.tokens) < 2 else TryExpr(
-                            node, nodes, None, suite)
+                            node, stmt, None,
+                            suite) if len(nodes.tokens) < 2 else TryExpr(
+                                node, nodes, None, suite)
                     self.eat(FINALLY)
                     self.eat(COLON)
-                    return TryExpr(node, stmt, self.suite(), suite) if len(
-                        nodes.tokens) < 2 else TryExpr(
-                        node, nodes, self.suite(), suite)
+                    return TryExpr(
+                        node, stmt, self.suite(),
+                        suite) if len(nodes.tokens) < 2 else TryExpr(
+                            node, nodes, self.suite(), suite)
                 if self.current_token.type == FINALLY:
                     self.eat(FINALLY)
                     self.eat(COLON)
                     other = self.suite()
                     return TryExpr(
-                        node, stmt, other) if len(
-                        nodes.tokens) < 2 else TryExpr(
-                        node, nodes, other)
+                        node, stmt,
+                        other) if len(nodes.tokens) < 2 else TryExpr(
+                            node, nodes, other)
                 elif self.current_token.type != EXCEPT:
-                    return TryExpr(
-                        node, stmt) if len(
-                        nodes.tokens) < 2 else TryExpr(
-                        node, nodes, other)
+                    return TryExpr(node,
+                                   stmt) if len(nodes.tokens) < 2 else TryExpr(
+                                       node, nodes, other)
 
     def with_item(self):
         # test ['as' expr]
@@ -1146,7 +1217,8 @@ class Parser(object):
             self.eat(RB)
         self.eat(NEWLINE)
         if node:
-            return UnaryOp(Token(DEC, DEC), BinOp(name, Token('()', '()'), node))
+            return UnaryOp(
+                Token(DEC, DEC), BinOp(name, Token('()', '()'), node))
         return UnaryOp(Token(DEC, DEC), name)
 
     def async_stmt(self):
