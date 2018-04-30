@@ -244,10 +244,40 @@ class Parser(object):
             node = BinOp(node, op, self.and_test())
         return node
 
+    def vfpdef(self):
+        #  NAME [':' test]
+        name = self.current_token
+        self.eat(name.type)
+        if self.current_token.type == COLON:
+            self.(COLON)
+            node = self.test()
+            return BinOp(name, Token(COLON, COLON), node)
+        return name
+
+    def varargslist(self):
+        #  (vfpdef ['=' test] (',' vfpdef ['=' test])* [',' [
+        #  '*' [vfpdef] (',' vfpdef ['=' test])* [',' ['**' vfpdef [',']]]
+        #  | '**' vfpdef [',']]]
+        #  | '*' [vfpdef] (',' vfpdef ['=' test])* [',' ['**' vfpdef [',']]]
+        #  | '**' vfpdef [',']
+        #  )
+        pass
+
+    def lambdef(self):
+        #  'lambda' [varargslist] ':' test
+        self.eat(LAMBDA)
+        if self.current_token.type == COLON:
+            self.eat(COLON)
+            node = self.test()
+            return UnaryOp(Token(LAMBDA, LAMBDA), node)
+        node = self.varargslist()
+        self.eat(COLON)
+        return BinOp(node, Token(LAMBDA, LAMBDA), self.test())
+
     def test(self):
         # or_test ['if' or_test 'else' test] | lambdef
         if self.current_token.type == LAMBDA:
-            pass
+            return self.lambdef()
         node = self.or_test()
         if self.current_token == IF:
             root = IfExpr()
@@ -704,7 +734,13 @@ class Parser(object):
 
     def annassign(self):
         # ':' test ['=' test]
-        pass
+        self.eat(COLON)
+        node = self.test()
+        if self.current_token.type == ASSIGN:
+            self.eat(ASSIGN)
+            value = self.test()
+            return BinOp(node, Token(ASSIGN, ASSIGN), value)
+        return node
 
     def expr_stmt(self):
         # testlist_star_expr (annassign | augassign (yield_expr|testlist) |
@@ -1069,8 +1105,24 @@ class Parser(object):
                         self.suite()) if len(root.tokens) > 1 else WithExpr(
                             node, self.suite())
 
+    def decorators(self):
+        #  decorator+
+        nodes = ListObj
+        while self.current_token.type == DEC:
+            node = self.decorator()
+            nodes.tokens.append(node)
+        return nodes if len(nodes.tokens) > 1 else node
+
     def decorated(self):
-        pass
+        #  decorators (classdef | funcdef | async_funcdef)
+        node = self.decorators()
+        if self.current_token.type == CLASS:
+            expr = self.classdef()
+        if self.current_token.type == DEF:
+            expr = self.funcdef()
+        if self.current_token.type == DEC:
+            expr = self.async_stmt()
+        return BinOp(node, Token(DEC, 'decorator'), expr)
 
     def dotted_name(self):
         #  dotted_name: NAME ('.' NAME)*
@@ -1082,13 +1134,20 @@ class Parser(object):
             self.eat(ID)
         return node
 
-    def decorater(self):
+    def decorator(self):
         # '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
         self.eat(DEC)
         name = self.dotted_name()
+        node = None
         if self.current_token.type == LB:
             self.eat(LB)
-            pass
+            if self.current_token.type != RB:
+                node = self.arglist()
+            self.eat(RB)
+        self.eat(NEWLINE)
+        if node:
+            return UnaryOp(Token(DEC, DEC), BinOp(name, Token('()', '()'), node))
+        return UnaryOp(Token(DEC, DEC), name)
 
     def async_stmt(self):
         # ASYNC (funcdef | with_stmt | for_stmt)
