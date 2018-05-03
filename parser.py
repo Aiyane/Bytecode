@@ -332,6 +332,7 @@ class Parser(object):
         #  | '*' [vfpdef] (',' vfpdef ['=' test])* [',' ['**' vfpdef [',']]]
         #  | '**' vfpdef [',']
         #  )
+        
         pass
 
     def lambdef(self):
@@ -363,19 +364,28 @@ class Parser(object):
 
     def yield_arg(self):
         # 'from' test | testlist
-        pass
+        self.eat(FROM)
+        try:
+            node = self.teat()
+        except SynError:
+            node = self.testlist()
+        return node
 
     def yield_expr(self):
         # 'yield' [yield_arg]
-        pass
+        self.eat(YIELD)
+        if self.current_token.type == FROM:
+            return UnaryOp(Token(YIELD, YIELD), self.yield_arg())
+        return UnaryOp(Token(YIELD, YIELD), None)
 
     def testlist_comp(self):
-        # (test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )
-        node = self.star_expr(
-        ) if self.current_token.type == MUL else self.test()
+        # (test|star_expr) ( # comp_for | (',' (test|star_expr))* [','] )
+        node = self.star_expr# (
+        ) if self.current_tok# en.type == MUL else self.test()
         root = ListObj()
         if self.current_token.type in (ASYNC, FOR):
-            pass
+            comp = self.comp_for()
+            return BinOp(node, Token('comp', 'comp'), comp)
 
         root.tokens.append(node)
         while self.current_token.type == COMMA:
@@ -388,6 +398,10 @@ class Parser(object):
         return root if len(root.tokens) > 1 else node
 
     def dictorsetmaker(self):
+        # ( ((test ':' test | '**' expr)
+        #        (comp_for | (',' (test ':' test | '**' expr))* [','])) |
+        #       ((test | star_expr)
+        #        (comp_for | (',' (test | star_expr))* [','])) )
         pass
 
     def atom(self):
@@ -437,10 +451,18 @@ class Parser(object):
             return op
         return UnaryOp(op, self.testlist())
 
+    def lambdef_nocond(self):
+        # 'lambda' [varargslist] ':' test_nocond
+        self.eat(LAMBDA)
+        if self.current_token.type != COLON:
+            node = self.varargslist()
+        self.eat(COLON)
+        pass
+
     def test_nocond(self):
         # or_test | lambdef_nocond
         if self.current_token.type == LAMBDA:
-            pass
+            return self.lambdef_nocond()
         return self.or_test()
 
     def comp_if(self):
@@ -1246,7 +1268,11 @@ class Parser(object):
 
     def eval_input(self):
         # testlist NEWLINE* ENDMARKER
-        pass
+        node = self.testlist()
+        while self.current_token.type == NEWLINE:
+            self.eat(NEWLINE)
+        self.eat(ENDMARKER)
+        return node
 
     def file_input(self):
         # (NEWLINE | stmt)* ENDMARKER
