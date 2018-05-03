@@ -454,10 +454,15 @@ class Parser(object):
     def lambdef_nocond(self):
         # 'lambda' [varargslist] ':' test_nocond
         self.eat(LAMBDA)
+        node = None
         if self.current_token.type != COLON:
             node = self.varargslist()
         self.eat(COLON)
-        pass
+        stmt = self.test_nocond()
+        if node:
+            return BinOp(node, Token(LAMBDA, LAMBDA), stmt)
+        return UnaryOp(Token(LAMBDA), stmt)
+         
 
     def test_nocond(self):
         # or_test | lambdef_nocond
