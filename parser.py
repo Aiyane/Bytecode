@@ -380,8 +380,8 @@ class Parser(object):
 
     def testlist_comp(self):
         # (test|star_expr) ( # comp_for | (',' (test|star_expr))* [','] )
-        node = self.star_expr# (
-        ) if self.current_tok# en.type == MUL else self.test()
+        node = self.star_expr(
+        ) if self.current_token.type == MUL else self.test()
         root = ListObj()
         if self.current_token.type in (ASYNC, FOR):
             comp = self.comp_for()

@@ -166,7 +166,7 @@ class Lexer(object):
         self.pos = 0
         self.current_char = self.text[self.pos]
         self.tab = 0
-        self.temp_token = None
+        self.temp_token = []
 
     def advance(self):
         # 向前取一个字符, 当前字符向前移动
@@ -939,8 +939,9 @@ class Lexer(object):
 
     def get_next_token(self):
         if self.temp_token:
-            token = self.temp_token
-            self.temp_token = None
+            token = self.temp_token.pop(0)
+            # token = self.temp_token
+            # self.temp_token = None
             return token
 
         while self.current_char is not None:
@@ -960,8 +961,9 @@ class Lexer(object):
                     self.tab = tab
                     return Token(INDENT, INDENT)
                 if (self.tab - tab) // 4 > 0:
-                    self.tab = tab
-                    self.temp_token = Token(DEDENT, DEDENT)
+                    while self.tab != tab:
+                        self.tab -= 4
+                        self.temp_token.append(Token(DEDENT, DEDENT))
 
                 self.tab = tab
                 return Token(NEWLINE, tab)
