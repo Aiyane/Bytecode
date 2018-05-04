@@ -4,4 +4,3 @@ parser.py实现了python的语法分析
 dot.py是语法树的可视化程序
 test*是测试代码段
 
-另外: pyvm2.py文件是500lines书中python解释器的代码
