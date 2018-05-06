@@ -22,8 +22,6 @@ class VisitNode(object):
     def visit_file_input(self):
 
         for token in self.root.tokens:
-            if hasattr(token, 'type') and token.type == 'NEWLINE':
-                continue
             if token:
                 self.visit('Program', token)
 

@@ -1284,7 +1284,7 @@ class Parser(object):
         root = ListObj()
         while True:
             if self.current_token.type == NEWLINE:
-                root.tokens.append(self.current_token)
+                # root.tokens.append(self.current_token)
                 self.eat(NEWLINE)
             else:
                 root.tokens.append(self.stmt())
