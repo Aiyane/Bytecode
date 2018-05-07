@@ -695,9 +695,9 @@ class Parser(object):
             self.eat(op.type)
             # node = BinOp(node, op, self.term())
             node2 = self.term()
-            try:
+            if isinstance(node.value, (int, float))and isinstance(node2.value, (int, float)):
                 node.value = BINARY_OPERATORS[op.type](node.value, node2.value)
-            except Exception:
+            else:
                 node = BinOp(node, op, node2)
         return node
 
@@ -1308,7 +1308,7 @@ class Parser(object):
 
 def main():
     with open(
-            '/home/aiyane/code/python/Bytecode/test2.py', "r",
+            '/home/aiyane/code/python/Bytecode/test.py', "r",
             encoding="utf8") as f:
         text = f.read()
 
@@ -1319,5 +1319,5 @@ def main():
 
 if __name__ == '__main__':
     tree = main()
-    import ipdb
-    ipdb.set_trace()  # XXX BREAKPOINT, n下一行, s进入函数, a打印当前函数参数, r运行
+    # import ipdb
+    # ipdb.set_trace()  # XXX BREAKPOINT, n下一行, s进入函数, a打印当前函数参数, r运行

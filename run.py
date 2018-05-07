@@ -3,8 +3,8 @@
 # File Name: run.py
 # Created Time: Fri 04 May 2018 07:58:05 PM CST
 
-from parser import Parser
-from lexer import Lexer, Token, Args
+from parser import Parser, Args
+from lexer import Lexer, Token
 
 
 class Run(object):
@@ -13,24 +13,49 @@ class Run(object):
         self.funcs = dict()
         self.root = root
 
-
     def visit_file_input(self):
-        pass
+        for token in self.root.tokens:
+            self.visit(token)
+
+    def visit(self, node, call=None):
+        method_name = 'visit_' + type(node).__name__
+        visitor = getattr(self, method_name, self.generic_visit)
+        if method_name == 'visit_Token':
+            return visitor(node, call)
+        return visitor(node)
+
+    def generic_visit(self, node):
+        # 抛出异常, 未知的Token
+        raise Exception('No visit_{} method'.format(type(node).__name__))
 
     def visit_BinOp(self, node):
+        # 如果是=, 为赋值语句
         if node.op.value == '=':
-            if isinstance(node.left, Token) and isinstance(node.right, Token):
-                self.vars[node.left.value] = node.right.value
+            self.vars[self.visit(node.left)] = self.visit(node.right, True)
 
+        # 如果是(), 为函数调用
         if node.op.value == '()':
-            func = self.funcs(node.left.value)
-            if func:
-                pass
-            else:
-                func = getattr(__builtin__, node.left.value)
-                if isinstance(node.right, Args):
-                    params = map(self.visit_Toke, node.right.args)
-                    return func(*params)
+            name = self.visit(node.left)
+            func = self.funcs.get(name)
+            if not func:
+                func = getattr(__builtins__, name)
+            params = self.visit(node.right, True)
+            return func(*params)
+
+        if node.op.value == '-':
+            return self.visit(node.left, True) - self.visit(node.right, True)
+        if node.op.value == '+':
+            return self.visit(node.left, True) + self.visit(node.right, True)
+        if node.op.value == '*':
+            return self.visit(node.left, True) * self.visit(node.right, True)
+        if node.op.value == '**':
+            return self.visit(node.left, True) ** self.visit(node.right, True)
+        if node.op.value == '/':
+            return self.visit(node.left, True) / self.visit(node.right, True)
+        if node.op.value == '//':
+            return self.visit(node.left, True) // self.visit(node.right, True)
+        if node.op.value == '%':
+            return self.visit(node.left, True) % self.visit(node.right, True)
         pass
 
     def visit_UnaryOp(self, node):
@@ -39,11 +64,21 @@ class Run(object):
     def visit_ListObj(self, node):
         pass
 
-    def visit_Token(self, node):
+    def visit_Token(self, node, call=None):
+        # 如果是str就直接返回
         if node.type == 'STR':
             return node.value
+        # 如果是ID, 在变量中查看, 或者返回其ID, 右值可能会被调用
         if node.type == 'ID':
-            return self.vars[node.value]
+            return self.vars[node.value] if call else node.value
+        if node.type == 'INT':
+            return node.value
+        if node.type == 'FLOAT':
+            return node.value
+        if node.type == 'TRUE':
+            return True
+        if node.type == 'FALSE':
+            return False
         pass
 
     def visit_IfExpr(self, node):
@@ -62,7 +97,12 @@ class Run(object):
         pass
 
     def visit_Args(self, node):
-        pass
+        # 有一个args参数, 这个参数的值是一个list
+        # list内的元素再去访问, 这是右值, 需要调用
+        res = []
+        for tok in node.args:
+            res.append(self.visit(tok, True))
+        return res
 
     def visit_Arg(self, node):
         pass
@@ -84,14 +124,16 @@ class Run(object):
 
 
 def main():
-    with open("test2.py", "r") as fin:
+    with open("test.py", "r") as fin:
         text = fin.read()
     lex = Lexer(text)
     par = Parser(lex)
     root = par.parse()
-    return root
+    return Run(root)
 
 
 if __name__ == "__main__":
     root = main()
-    import ipdb; ipdb.set_trace()
+    # import ipdb
+    # ipdb.set_trace()
+    root.visit_file_input()

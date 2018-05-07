@@ -1004,7 +1004,7 @@ class Lexer(object):
 
 
 if __name__ == '__main__':
-    with open('/home/aiyane/code/python/Bytecode/test2.py', "r", encoding="utf8") as f:
+    with open('/home/aiyane/code/python/Bytecode/test.py', "r", encoding="utf8") as f:
         text = f.read()
 
     lexer = Lexer(text)
