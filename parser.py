@@ -1319,5 +1319,5 @@ def main():
 
 if __name__ == '__main__':
     tree = main()
-    # import ipdb
-    # ipdb.set_trace()  # XXX BREAKPOINT, n下一行, s进入函数, a打印当前函数参数, r运行
+    import ipdb
+    ipdb.set_trace()  # XXX BREAKPOINT, n下一行, s进入函数, a打印当前函数参数, r运行

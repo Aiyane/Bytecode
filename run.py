@@ -59,10 +59,12 @@ class Run(object):
         pass
 
     def visit_UnaryOp(self, node):
+        if node.op.value == '[]':
+            return self.visit(node.token)
         pass
 
     def visit_ListObj(self, node):
-        pass
+        return [i for i in map(lambda x: self.visit(x), node.tokens)]
 
     def visit_Token(self, node, call=None):
         # 如果是str就直接返回
