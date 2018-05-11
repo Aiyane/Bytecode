@@ -366,7 +366,7 @@ class Parser(object):
         # 'from' test | testlist
         self.eat(FROM)
         try:
-            node = self.teat()
+            node = self.test()
         except SynError:
             node = self.testlist()
         return node
@@ -461,7 +461,7 @@ class Parser(object):
         stmt = self.test_nocond()
         if node:
             return BinOp(node, Token(LAMBDA, LAMBDA), stmt)
-        return UnaryOp(Token(LAMBDA), stmt)
+        return UnaryOp(Token(LAMBDA, LAMBDA), stmt)
          
 
     def test_nocond(self):
@@ -1205,7 +1205,7 @@ class Parser(object):
 
     def decorators(self):
         #  decorator+
-        nodes = ListObj
+        nodes = ListObj()
         while self.current_token.type == DEC:
             node = self.decorator()
             nodes.tokens.append(node)
