@@ -332,7 +332,7 @@ class Parser(object):
         #  | '*' [vfpdef] (',' vfpdef ['=' test])* [',' ['**' vfpdef [',']]]
         #  | '**' vfpdef [',']
         #  )
-        
+
         pass
 
     def lambdef(self):
@@ -461,8 +461,7 @@ class Parser(object):
         stmt = self.test_nocond()
         if node:
             return BinOp(node, Token(LAMBDA, LAMBDA), stmt)
-        return UnaryOp(Token(LAMBDA), stmt)
-         
+        return UnaryOp(Token(LAMBDA, LAMBDA), stmt)
 
     def test_nocond(self):
         # or_test | lambdef_nocond
@@ -867,11 +866,31 @@ class Parser(object):
 
         return node
 
+    def break_stmt(self):
+        pass
+
+    def continue_stmt(self):
+        pass
+
+    def raise_stmt(self):
+        pass
+
+    def yield_stmt(self):
+        pass
+
     def flow_stmt(self):
         # break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
         if self.current_token.type == RET:
             return self.return_stmt()
-        pass
+        if self.current_token == BREAK:
+            return self.break_stmt()
+        if self.current_token == CONTINUE:
+            return self.continue_stmt()
+        if self.current_token == RET:
+            return self.return_stmt()
+        if self.current_token == RAISE:
+            return self.raise_stmt()
+        return self.yield_stmt
 
     def small_stmt(self):
         # (expr_stmt | del_stmt | pass_stmt | flow_stmt |
