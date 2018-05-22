@@ -1,7 +1,7 @@
 #!/usr/bin/env/python3
 # -*- coding: utf-8 -*-
 # dot.py
-from parser import Parser
+from parser_ import Parser
 from lexer import Lexer
 try:
     import debug
