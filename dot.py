@@ -244,7 +244,7 @@ def main():
 
 
 if __name__ == '__main__':
-    import ipdb
+    # import ipdb
     res = main()
-    ipdb.set_trace()
+    # ipdb.set_trace()
     # dot res.dot -T png -o out.png

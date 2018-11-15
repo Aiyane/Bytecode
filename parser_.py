@@ -1326,8 +1326,7 @@ class Parser(object):
 
 
 def main():
-    with open(
-            '/home/aiyane/code/python/Bytecode/test.py', "r",
+    with open('test.py', "r",
             encoding="utf8") as f:
         text = f.read()
 
@@ -1338,5 +1337,5 @@ def main():
 
 if __name__ == '__main__':
     tree = main()
-    import ipdb
-    ipdb.set_trace()  # XXX BREAKPOINT, n下一行, s进入函数, a打印当前函数参数, r运行
+    # import ipdb
+    # ipdb.set_trace()  # XXX BREAKPOINT, n下一行, s进入函数, a打印当前函数参数, r运行

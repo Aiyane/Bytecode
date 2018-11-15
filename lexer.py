@@ -82,6 +82,7 @@ AWAIT = 'AWAIT'
 ASYNC = 'ASYNC'
 
 
+# 令牌类
 class Token(object):
     def __init__(self, type, value):
         self.type = type
@@ -141,7 +142,7 @@ KEY_WORDS = {
     'async': Token(ASYNC, 'ASYNC'),
 }
 
-# 符号表
+# 分割符号表
 SIGOTABLE = {
     '(': Token(LB, '('),
     ')': Token(RB, ')'),
@@ -156,12 +157,20 @@ SIGOTABLE = {
 }
 
 
+# 字符错误
 class CharacterError(Exception):
     pass
 
 
 class Lexer(object):
     def __init__(self, text):
+        """
+        text: 代码全文
+        pos: 当前指针
+        current_cur: 当前字符
+        tab: 前一个缩进级别
+        temp_token: 需要返回的令牌
+        """
         self.text = ''.join([text, '\n'])
         self.pos = 0
         self.current_char = self.text[self.pos]
@@ -169,7 +178,7 @@ class Lexer(object):
         self.temp_token = []
 
     def advance(self):
-        # 向前取一个字符, 当前字符向前移动
+        """向前取一个字符, 当前字符向前移动"""
         self.pos += 1
         if self.pos > len(self.text) - 1:
             self.current_char = None  # Indicates end of input
@@ -177,38 +186,41 @@ class Lexer(object):
             self.current_char = self.text[self.pos]
 
     def peek(self):
-        # 向前取一个字符, 当前字符不变
+        """向前取一个字符, 当前字符不变"""
         peek_pos = self.pos + 1
         if peek_pos > len(self.text) - 1:
             return None
         return self.text[peek_pos]
 
     def peekn(self, n):
-        # 向前取n个字符
+        """向前取n个字符"""
         peek_pos = self.pos + n
         if 0 == n or peek_pos > len(self.text) - 1:
             return None
         return self.text[self.pos+1:peek_pos+1]
 
     def skip_whitespace(self):
-        # 跳过空白字符
+        """跳过空白字符"""
         while self.current_char is not None and self.current_char.isspace():
             self.advance()
 
     def skip_comment(self):
-        # 跳过单行注释
+        """跳过单行注释"""
         while self.current_char != '\n':
             self.advance()
         self.advance()
 
     def stringliteral(self):
-        # [stringprefix](shortstring | longstring)
+        """[stringprefix](shortstring | longstring)"""
 
         result = ''
 
+        # stringprefix 的 FIRST 集为 {"r", "u", "R", "U", "f", "F"}
         if self.current_char in ("r", "u", "R", "U", "f", "F"):
             result += self.stringprefix()
 
+        # longstring 字符串以 """ 或 ''' 包裹的字符串。
+        # shortstring 字符串以 ' 或 " 包裹的字符串。 
         if self.current_char in ("'", '"'):
             quote = self.current_char
             if self.peekn(2) in ("''", '""'):
@@ -220,8 +232,10 @@ class Lexer(object):
         self.error()
 
     def stringprefix(self):
-        # "r" | "u" | "R" | "U" | "f" | "F"
-        # | "fr" | "Fr" | "fR" | "FR" | "rf" | "rF" | "Rf" | "RF"
+        """字符串前缀
+        "r" | "u" | "R" | "U" | "f" | "F"
+        | "fr" | "Fr" | "fR" | "FR" | "rf" | "rF" | "Rf" | "RF" 
+        """
         if self.current_char in ("r", "u", "R", "U", "f", "F"):
             result = self.current_char
 
@@ -236,7 +250,10 @@ class Lexer(object):
         self.error()
 
     def shortstring(self, quote):
-        # "'" shortstringitem* "'" | '"' shortstringitem* '"'
+        """字符串
+        quote: 字符串包裹的字符，" 或 '
+        "'" shortstringitem* "'" | '"' shortstringitem* '"'
+        """
         result = ''
         if self.current_char == quote:
             result = quote
@@ -257,7 +274,10 @@ class Lexer(object):
         self.error()
 
     def longstring(self, quote):
-        # '''" longstringitem* "'''" | '"""' longstringitem* '"""'
+        """字符串
+        quote: 字符串包裹的字符，" (3个) 或 ' (3个)
+        "'''" longstringitem* "'''" | '"""' longstringitem* '"""'
+        """
         result = ''
         _loop_num = 3
 
@@ -285,10 +305,10 @@ class Lexer(object):
         return result
 
     def shortstringitem(self, quote):
-        # shortstringchar | stringescapeseq
+        """shortstringchar | stringescapeseq"""
 
         result = ''
-
+        # stringescapeseq 的 FIRST 集为 '\'
         if self.current_char == '\\':
             result = self.stringescapeseq()
         elif self.current_char not in ('\n', quote):
@@ -299,10 +319,10 @@ class Lexer(object):
         return result
 
     def longstringitem(self):
-        # longstringchar | stringescapeseq
+        """longstringchar | stringescapeseq"""
 
         result = ''
-
+        # stringescapeseq 的 FIRST 集为 '\'
         if self.current_char == '\\':
             result = self.stringescapeseq()
         elif self.current_char:
@@ -313,7 +333,7 @@ class Lexer(object):
         return result
 
     def shortstringchar(self, quote):
-        # <任意非"\" 换行 引号字符>
+        """ <任意非"\" 换行 引号字符> """
         result = ''
 
         if self.current_char not in ('\\', '\n', quote):
@@ -324,7 +344,7 @@ class Lexer(object):
         self.error()
 
     def longstringchar(self):
-        # <任意非"\"字符>
+        """ <任意非"\"字符> """
         result = ''
 
         if self.current_char != '\\':
@@ -335,7 +355,7 @@ class Lexer(object):
         self.error()
 
     def stringescapeseq(self):
-        # "\" <任意字符>
+        """ "\" <任意字符> """
         result = ''
 
         if self.current_char == '\\':
@@ -348,9 +368,10 @@ class Lexer(object):
         self.error()
 
     def bytesliteral(self):
-        # bytesprefix(shortbytes | longbytes)
+        """bytesprefix(shortbytes | longbytes)"""
 
         result = ''
+        # bytesprefix 的 FIRST 集为 {"b", "B", "r", "R"}
         if self.current_char in ("b", "B", "r", "R"):
             result += self.bytesprefix()
         else:
@@ -367,7 +388,9 @@ class Lexer(object):
         self.error()
 
     def bytesprefix(self):
-        # "b" | "B" | "br" | "Br" | "bR" | "BR" | "rb" | "rB" | "Rb" | "RB"
+        """二进制字符串前缀
+        "b" | "B" | "br" | "Br" | "bR" | "BR" | "rb" | "rB" | "Rb" | "RB"
+        """
         if self.current_char in ("b", "B", "r", "R"):
             result = self.current_char
 
@@ -381,7 +404,7 @@ class Lexer(object):
         self.error()
 
     def shortbytes(self, quote):
-        # "'" shortbytesitem* "'" | '"' shortbytesitem* '"'
+        """ "'" shortbytesitem* "'" | '"' shortbytesitem* '"' """
         result = ''
         if self.current_char == quote:
             result += quote
@@ -402,7 +425,7 @@ class Lexer(object):
         self.error()
 
     def longbytes(self, quote):
-        # "'''" longbytesitem* "'''" | '"""' longbytesitem* '"""'
+        """ "'''" longbytesitem* "'''" | '"""' longbytesitem* '"""' """
         result = ''
         _loop_num = 3
 
@@ -430,7 +453,7 @@ class Lexer(object):
         return result
 
     def shortbytesitem(self, quote):
-        # shortbyteschar | bytesescapeseq
+        """ shortbyteschar | bytesescapeseq """
         result = ''
 
         if self.current_char == '\\':
@@ -443,7 +466,7 @@ class Lexer(object):
         return result
 
     def longbytesitem(self):
-        # longbyteschar | bytesescapeseq
+        """ longbyteschar | bytesescapeseq """
         result = ''
 
         if self.current_char == '\\':
@@ -456,7 +479,7 @@ class Lexer(object):
         return result
 
     def shortbyteschar(self, quote):
-        # <任意非"\" 换行 引号字符>
+        """ <任意非"\" 换行 引号字符> """
         result = ''
 
         if self.current_char not in ('\\', '\n', quote) and ord(self.current_char) < 128:
@@ -467,7 +490,7 @@ class Lexer(object):
         self.error()
 
     def longbyteschar(self):
-        # <任意非"\"字符>
+        """ <任意非"\"字符> """
         result = ''
 
         if self.current_char != '\\' and ord(self.current_char) < 128:
@@ -478,7 +501,7 @@ class Lexer(object):
         self.error()
 
     def bytesescapeseq(self):
-        # "\" <任意ASCII字符>
+        """ "\" <任意ASCII字符> """
         result = ''
 
         if self.current_char == '\\' and ord(self.current_char) < 128:
@@ -491,6 +514,7 @@ class Lexer(object):
         self.error()
 
     def _id(self):
+        """ 变量名 """
         cur_char = self.current_char
         next_char = self.peek()
         next_next_char = self.peekn(2)[1]
@@ -519,6 +543,7 @@ class Lexer(object):
         return KEY_WORDS.get(result, Token(ID, result))
 
     def basedigit(self, items):
+        """ 数字 """
         if self.current_char in items:
             result = self.current_char
             self.advance()
@@ -546,6 +571,7 @@ class Lexer(object):
                                "9", "a", "b", "c", "d", "e", "f", "A", "B", "C", "D", "E", "F"))
 
     def baseinteger(self, head, digit_func):
+        """ int 类型 """
         if self.current_char == '0' and self.peek() in head:
             result = self.current_char
             self.advance()
@@ -571,19 +597,19 @@ class Lexer(object):
             return result
 
     def hexinteger(self):
-        # "0" ("x" | "X") (["_"] hexdigit)+
+        """ "0" ("x" | "X") (["_"] hexdigit)+ """
         return self.baseinteger(("x", "X"), self.hexdigit)
 
     def octinteger(self):
-        # "0" ("o" | "O") (["_"] octdigit)+
+        """ "0" ("o" | "O") (["_"] octdigit)+ """
         return self.baseinteger(("o", "O"), self.octdigit)
 
     def bininteger(self):
-        # "0" ("b" | "B") (["_"] bindigit)+
+        """ "0" ("b" | "B") (["_"] bindigit)+ """
         return self.baseinteger(("b", "B"), self.bindigit)
 
     def decinteger(self):
-        # nonzerodigit (["_"] digit)* | "0"+ (["_"] "0")*
+        """ nonzerodigit (["_"] digit)* | "0"+ (["_"] "0")* """
         result = ''
 
         if self.current_char == "0":
@@ -628,7 +654,8 @@ class Lexer(object):
         self.error()
 
     def integer(self):
-        # decinteger | bininteger | octinteger | hexinteger
+        """int类型 
+        decinteger | bininteger | octinteger | hexinteger """
         if self.current_char.isdigit():
             if self.current_char == "0":
                 if self.peek() in ("o", "O"):
@@ -645,7 +672,7 @@ class Lexer(object):
         self.error()
 
     def digitpart(self):
-        # digit (["_"] digit)*
+        """ digit (["_"] digit)* """
         if self.current_char.isdigit():
             result = self.digit()
 
@@ -664,7 +691,7 @@ class Lexer(object):
         self.error()
 
     def fraction(self):
-        # "." digitpart
+        """ "." digitpart """
         if self.current_char == ".":
             result = '.'
             self.advance()
@@ -674,7 +701,7 @@ class Lexer(object):
         self.error()
 
     def exponent(self):
-        # ("e" | "E") ["+" | "-"] digitpart
+        """ ("e" | "E") ["+" | "-"] digitpart """
         if self.current_char in ("e", "E"):
             result = self.current_char
             self.advance()
@@ -689,7 +716,7 @@ class Lexer(object):
         self.error()
 
     def pointfloat(self):
-        # [digitpart] fraction | digitpart "."
+        """ [digitpart] fraction | digitpart "." """
         result = ''
         if self.current_char.isdigit():
             result = self.digitpart()
@@ -710,7 +737,7 @@ class Lexer(object):
         self.error()
 
     def exponentfloat(self):
-        # (digitpart | pointfloat) exponent
+        """ (digitpart | pointfloat) exponent """
         pos = self.pos
         try:
             result = self.pointfloat()
@@ -723,7 +750,7 @@ class Lexer(object):
         return result
 
     def floatnumber(self):
-        # pointfloat | exponentfloat
+        """ pointfloat | exponentfloat """
         pos = self.pos
         try:
             result = self.exponentfloat()
@@ -735,7 +762,7 @@ class Lexer(object):
         return result
 
     def imagnumber(self):
-        # (floatnumber | digitpart) ("j" | "J")
+        """ (floatnumber | digitpart) ("j" | "J") """
         pos = self.pos
         try:
             result = self.floatnumber()
@@ -755,6 +782,7 @@ class Lexer(object):
         self.error()
 
     def number(self):
+        """ 数字 """
         pos = self.pos
         try:
             return Token(INUM, complex(self.imagnumber()))
@@ -769,6 +797,7 @@ class Lexer(object):
                 return self.integer()
 
     def other(self):
+        """ 操作符 """
         if self.current_char == '>':
             if self.peekn(2) == ">=":
                 self.advance()
@@ -1004,7 +1033,7 @@ class Lexer(object):
 
 
 if __name__ == '__main__':
-    with open('/home/aiyane/code/python/Bytecode/test.py', "r", encoding="utf8") as f:
+    with open('test2.py', "r", encoding="utf8") as f:
         text = f.read()
 
     lexer = Lexer(text)
