@@ -694,7 +694,7 @@ class Parser(object):
             self.eat(op.type)
             # node = BinOp(node, op, self.term())
             node2 = self.term()
-            if isinstance(node.value, (int, float))and isinstance(node2.value, (int, float)):
+            if hasattr(node, 'value') and isinstance(node.value, (int, float))and isinstance(node2.value, (int, float)):
                 node.value = BINARY_OPERATORS[op.type](node.value, node2.value)
             else:
                 node = BinOp(node, op, node2)

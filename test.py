@@ -3,9 +3,10 @@
 # test.py
 
 
-c = [1, 2, 3, 4]
+c = True
 a = 2
 b = 5.5
+d = a + b * a // 2 - 1
 
 print(a - b)
 print(a + b)
@@ -14,3 +15,8 @@ print(a // b)
 print(a / b)
 print(a % b)
 print(b ** a)
+
+if c:
+    a = 3 + b
+else:
+    b = d + 2
